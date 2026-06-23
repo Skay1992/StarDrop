@@ -13,6 +13,7 @@ from handlers.formatters import format_admin_order, format_order_summary, format
 from keyboards.admin import admin_order_keyboard
 from keyboards.callbacks import LEGACY_MY_ORDERS, MY_ORDERS
 from keyboards.main import home_menu_keyboard
+from keyboards.orders import order_cancelled_keyboard
 
 
 router = Router()
@@ -64,5 +65,5 @@ async def order_cancel(callback: CallbackQuery) -> None:
         return
 
     repository.update_status(order_id, STATUS_CANCELLED)
-    await callback.message.edit_text("Заказ отменен.", reply_markup=home_menu_keyboard())
+    await callback.message.edit_text("Заказ отменен.", reply_markup=order_cancelled_keyboard())
     await callback.answer()

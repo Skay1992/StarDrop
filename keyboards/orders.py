@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from keyboards.callbacks import MAIN_MENU, MY_ORDERS
+from keyboards.callbacks import MAIN_MENU, MY_ORDERS, SUPPORT
 
 
 def payment_keyboard(order_id: int) -> InlineKeyboardMarkup:
@@ -26,5 +26,14 @@ def order_completed_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
             [InlineKeyboardButton(text="📦 Мои заказы", callback_data=MY_ORDERS)],
+        ]
+    )
+
+
+def order_cancelled_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
+            [InlineKeyboardButton(text="💬 Поддержка", callback_data=SUPPORT)],
         ]
     )

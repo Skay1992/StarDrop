@@ -1,7 +1,7 @@
 from keyboards.admin import admin_complete_confirmation_keyboard
 from keyboards.callbacks import BUY_PREMIUM, BUY_STARS, MAIN_MENU, MY_ORDERS, SUPPORT
 from keyboards.main import home_menu_keyboard, main_menu_keyboard
-from keyboards.orders import order_completed_keyboard, payment_keyboard
+from keyboards.orders import order_cancelled_keyboard, order_completed_keyboard, payment_keyboard
 from keyboards.premium import premium_keyboard
 from keyboards.stars import stars_keyboard
 
@@ -83,3 +83,12 @@ def test_order_completed_keyboard_contains_main_menu_and_orders():
     assert keyboard.inline_keyboard[0][0].callback_data == MAIN_MENU
     assert keyboard.inline_keyboard[1][0].text == "📦 Мои заказы"
     assert keyboard.inline_keyboard[1][0].callback_data == MY_ORDERS
+
+
+def test_order_cancelled_keyboard_contains_main_menu_and_support():
+    keyboard = order_cancelled_keyboard()
+
+    assert keyboard.inline_keyboard[0][0].text == "🏠 Главное меню"
+    assert keyboard.inline_keyboard[0][0].callback_data == MAIN_MENU
+    assert keyboard.inline_keyboard[1][0].text == "💬 Поддержка"
+    assert keyboard.inline_keyboard[1][0].callback_data == SUPPORT

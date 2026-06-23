@@ -9,8 +9,7 @@ from handlers.formatters import (
     format_completed_message,
 )
 from keyboards.admin import admin_complete_confirmation_keyboard, admin_order_keyboard
-from keyboards.main import home_menu_keyboard
-from keyboards.orders import order_completed_keyboard
+from keyboards.orders import order_cancelled_keyboard, order_completed_keyboard
 
 
 router = Router()
@@ -91,7 +90,7 @@ async def admin_cancel_order(callback: CallbackQuery, settings: Settings) -> Non
     await callback.bot.send_message(
         order.user_id,
         "Заказ отменен.\nОбратитесь в поддержку.",
-        reply_markup=home_menu_keyboard(),
+        reply_markup=order_cancelled_keyboard(),
     )
     await callback.message.edit_text(format_admin_order(order))
     await callback.answer("Отменено.")

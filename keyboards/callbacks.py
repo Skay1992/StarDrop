@@ -1,0 +1,11 @@
+BUY_STARS = "buy_stars"
+BUY_PREMIUM = "buy_premium"
+MY_ORDERS = "my_orders"
+SUPPORT = "support"
+MAIN_MENU = "main_menu"
+
+LEGACY_BUY_STARS = "stars:start"
+LEGACY_BUY_PREMIUM = "premium:start"
+LEGACY_MY_ORDERS = "orders:list"
+LEGACY_SUPPORT = "support:start"
+LEGACY_MAIN_MENU = "menu:main"

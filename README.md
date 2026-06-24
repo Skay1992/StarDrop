@@ -50,7 +50,10 @@ pip install -r requirements.txt
 ```env
 BOT_TOKEN=ваш_токен_от_BotFather
 ADMIN_ID=ваш_числовой_telegram_id
+REVIEWS_URL=https://t.me/stardrop_reviews
 ```
+
+`REVIEWS_URL` — ссылка на канал отзывов. По умолчанию используется канал `https://t.me/stardrop_reviews`, но вы можете заменить ссылку в `.env`.
 
 Запустите:
 

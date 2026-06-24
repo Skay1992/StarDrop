@@ -1,4 +1,5 @@
 import asyncio
+from types import SimpleNamespace
 
 from handlers.start import MAIN_MENU_TEXT, cancel_command, show_main_menu, start_command
 from keyboards.callbacks import MAIN_MENU
@@ -42,35 +43,41 @@ class FakeCallback:
 def test_start_command_clears_fsm_state_and_shows_main_menu():
     state = FakeState()
     message = FakeMessage()
+    settings = SimpleNamespace(reviews_url="https://t.me/stardrop_reviews")
 
-    asyncio.run(start_command(message, state))
+    asyncio.run(start_command(message, state, settings))
 
     assert state.cleared
     assert message.answers[0]["text"] == MAIN_MENU_TEXT
     assert message.answers[0]["reply_markup"] is not None
+    assert message.answers[0]["reply_markup"].inline_keyboard[2][0].url == "https://t.me/stardrop_reviews"
 
 
 def test_back_to_menu_callback_clears_fsm_state_and_shows_main_menu():
     state = FakeState()
     callback = FakeCallback()
+    settings = SimpleNamespace(reviews_url="https://t.me/stardrop_reviews")
 
-    asyncio.run(show_main_menu(callback, state))
+    asyncio.run(show_main_menu(callback, state, settings))
 
     assert state.cleared
     assert callback.message.edits[0]["text"] == MAIN_MENU_TEXT
     assert callback.message.edits[0]["reply_markup"] is not None
+    assert callback.message.edits[0]["reply_markup"].inline_keyboard[2][0].url == "https://t.me/stardrop_reviews"
     assert callback.answered
 
 
 def test_cancel_command_clears_fsm_state_and_shows_main_menu():
     state = FakeState()
     message = FakeMessage()
+    settings = SimpleNamespace(reviews_url="https://t.me/stardrop_reviews")
 
-    asyncio.run(cancel_command(message, state))
+    asyncio.run(cancel_command(message, state, settings))
 
     assert state.cleared
     assert message.answers[0]["text"] == f"Действие отменено.\n\n{MAIN_MENU_TEXT}"
     assert message.answers[0]["reply_markup"] is not None
+    assert message.answers[0]["reply_markup"].inline_keyboard[2][0].url == "https://t.me/stardrop_reviews"
 
 
 def test_back_to_menu_button_text():

@@ -122,6 +122,27 @@ def format_orders_list(orders: Iterable[Order]) -> str:
     return "\n".join(lines)
 
 
+def format_admin_orders_list(orders: Iterable[Order], title: str) -> str:
+    orders = list(orders)
+    if not orders:
+        return f"{title}\n\nЗаказов нет."
+
+    lines = [title]
+    for order in orders:
+        lines.extend(
+            [
+                "",
+                f"#{order.id} · {product_label(order)}",
+                product_details(order),
+                f"Получатель: {order.telegram_username}",
+                f"Сумма: {order.price_rub} ₽",
+                f"Статус: {status_label(order.status)}",
+                f"Дата: {order.created_at}",
+            ]
+        )
+    return "\n".join(lines)
+
+
 def format_completed_message(order: Order) -> str:
     if order.product_type == PRODUCT_PREMIUM:
         return (

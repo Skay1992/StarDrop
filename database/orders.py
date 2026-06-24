@@ -114,6 +114,30 @@ class OrderRepository:
 
         return [_order_from_row(row) for row in rows]
 
+    def list_orders(self, status: Optional[str] = None, limit: int = 10) -> List[Order]:
+        with get_connection(self.db_path) as connection:
+            if status is None:
+                rows = connection.execute(
+                    """
+                    SELECT * FROM orders
+                    ORDER BY id DESC
+                    LIMIT ?
+                    """,
+                    (limit,),
+                ).fetchall()
+            else:
+                rows = connection.execute(
+                    """
+                    SELECT * FROM orders
+                    WHERE status = ?
+                    ORDER BY id DESC
+                    LIMIT ?
+                    """,
+                    (status, limit),
+                ).fetchall()
+
+        return [_order_from_row(row) for row in rows]
+
 
 def _order_from_row(row) -> Order:
     return Order(

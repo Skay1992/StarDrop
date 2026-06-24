@@ -1,4 +1,9 @@
-from keyboards.admin import admin_complete_confirmation_keyboard
+from database.orders import Order, PRODUCT_STARS, STATUS_COMPLETED, STATUS_PENDING_REVIEW
+from keyboards.admin import (
+    admin_complete_confirmation_keyboard,
+    admin_orders_list_keyboard,
+    admin_panel_keyboard,
+)
 from keyboards.callbacks import BUY_PREMIUM, BUY_STARS, MAIN_MENU, MY_ORDERS, SUPPORT
 from keyboards.main import home_menu_keyboard, main_menu_keyboard
 from keyboards.orders import order_cancelled_keyboard, order_completed_keyboard, payment_keyboard
@@ -7,14 +12,15 @@ from keyboards.stars import stars_keyboard
 
 
 def test_main_menu_callback_data():
-    keyboard = main_menu_keyboard()
+    keyboard = main_menu_keyboard("https://t.me/stardrop_reviews")
     buttons = [row[0] for row in keyboard.inline_keyboard]
 
-    assert [(button.text, button.callback_data) for button in buttons] == [
-        ("⭐ Купить звезды", BUY_STARS),
-        ("💎 Telegram Premium", BUY_PREMIUM),
-        ("📦 Мои заказы", MY_ORDERS),
-        ("💬 Поддержка", SUPPORT),
+    assert [(button.text, button.callback_data, button.url) for button in buttons] == [
+        ("⭐ Купить звезды", BUY_STARS, None),
+        ("💎 Telegram Premium", BUY_PREMIUM, None),
+        ("⭐ Отзывы", None, "https://t.me/stardrop_reviews"),
+        ("📦 Мои заказы", MY_ORDERS, None),
+        ("💬 Поддержка", SUPPORT, None),
     ]
 
 
@@ -40,6 +46,7 @@ def test_premium_keyboard_contains_durations_and_back_button():
     rows = keyboard.inline_keyboard
 
     assert [row[0].text for row in rows] == [
+        "1 месяц · 349 ₽",
         "3 месяца · 990 ₽",
         "6 месяцев · 1690 ₽",
         "12 месяцев · 2990 ₽",
@@ -56,6 +63,54 @@ def test_admin_complete_confirmation_keyboard():
     assert buttons[0].callback_data == "admin:confirm_complete:7"
     assert buttons[1].text == "↩️ Нет, назад"
     assert buttons[1].callback_data == "admin:back:7"
+
+
+def test_admin_panel_keyboard_contains_order_filters_and_main_menu():
+    keyboard = admin_panel_keyboard()
+
+    assert [(row[0].text, row[0].callback_data) for row in keyboard.inline_keyboard] == [
+        ("🟠 Проверяем оплату", "admin:list:pending_review"),
+        ("🟢 Выполненные", "admin:list:completed"),
+        ("🔴 Отмененные", "admin:list:cancelled"),
+        ("📦 Все заказы", "admin:list:all"),
+        ("🏠 Главное меню", MAIN_MENU),
+    ]
+
+
+def test_admin_orders_list_keyboard_shows_actions_only_for_pending_orders():
+    pending_order = Order(
+        id=7,
+        user_id=123,
+        username="client",
+        product_type=PRODUCT_STARS,
+        stars_amount=50,
+        premium_months=None,
+        telegram_username="@receiver",
+        price_rub=65,
+        status=STATUS_PENDING_REVIEW,
+        created_at="2026-06-24 00:00:00",
+    )
+    completed_order = Order(
+        id=8,
+        user_id=456,
+        username="other",
+        product_type=PRODUCT_STARS,
+        stars_amount=100,
+        premium_months=None,
+        telegram_username="@other",
+        price_rub=130,
+        status=STATUS_COMPLETED,
+        created_at="2026-06-24 00:00:00",
+    )
+
+    keyboard = admin_orders_list_keyboard([pending_order, completed_order])
+
+    assert keyboard.inline_keyboard[0][0].text == "✅ #7"
+    assert keyboard.inline_keyboard[0][0].callback_data == "admin:complete:7"
+    assert keyboard.inline_keyboard[0][1].text == "❌ #7"
+    assert keyboard.inline_keyboard[0][1].callback_data == "admin:cancel:7"
+    assert keyboard.inline_keyboard[1][0].text == "↩️ Админ меню"
+    assert keyboard.inline_keyboard[1][0].callback_data == "admin:menu"
 
 
 def test_payment_keyboard_contains_paid_cancel_and_back_to_menu():

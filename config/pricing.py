@@ -8,6 +8,7 @@ STARS_PRICES = {
 }
 
 PREMIUM_PRICES = {
+    1: 349,
     3: 990,
     6: 1690,
     12: 2990,
@@ -31,10 +32,12 @@ def get_premium_price(months: int) -> int:
     try:
         return PREMIUM_PRICES[months]
     except KeyError as exc:
-        raise ValueError("Premium duration must be 3, 6, or 12 months") from exc
+        raise ValueError("Premium duration must be 1, 3, 6, or 12 months") from exc
 
 
 def premium_duration_label(months: int) -> str:
+    if months == 1:
+        return "1 месяц"
     if months == 3:
         return "3 месяца"
     return f"{months} месяцев"

@@ -34,6 +34,7 @@ def test_load_settings_accepts_filled_values(tmp_path):
     assert settings.admin_id == 123456789
     assert settings.sbp_phone is None
     assert settings.sbp_name is None
+    assert settings.reviews_url == "https://t.me/stardrop_reviews"
 
 
 def test_load_settings_reads_payment_requisites(tmp_path):
@@ -50,3 +51,17 @@ def test_load_settings_reads_payment_requisites(tmp_path):
 
     assert settings.sbp_phone == "+79990000000"
     assert settings.sbp_name == "Антон"
+
+
+def test_load_settings_reads_reviews_url(tmp_path):
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "BOT_TOKEN=TEST_BOT_TOKEN_FILLED_VALUE\n"
+        "ADMIN_ID=123456789\n"
+        "REVIEWS_URL=https://t.me/custom_reviews\n",
+        encoding="utf-8",
+    )
+
+    settings = load_settings(Path(env_file))
+
+    assert settings.reviews_url == "https://t.me/custom_reviews"

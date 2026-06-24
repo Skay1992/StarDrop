@@ -29,9 +29,10 @@ def test_custom_stars_amount_limits():
 
 
 def test_premium_prices():
+    assert get_premium_price(1) == 349
     assert get_premium_price(3) == 990
     assert get_premium_price(6) == 1690
     assert get_premium_price(12) == 2990
 
     with pytest.raises(ValueError):
-        get_premium_price(1)
+        get_premium_price(2)

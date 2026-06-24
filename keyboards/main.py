@@ -1,13 +1,15 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from config.settings import DEFAULT_REVIEWS_URL
 from keyboards.callbacks import BUY_PREMIUM, BUY_STARS, MAIN_MENU, MY_ORDERS, SUPPORT
 
 
-def main_menu_keyboard() -> InlineKeyboardMarkup:
+def main_menu_keyboard(reviews_url: str = DEFAULT_REVIEWS_URL) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="⭐ Купить звезды", callback_data=BUY_STARS)],
             [InlineKeyboardButton(text="💎 Telegram Premium", callback_data=BUY_PREMIUM)],
+            [InlineKeyboardButton(text="⭐ Отзывы", url=reviews_url)],
             [InlineKeyboardButton(text="📦 Мои заказы", callback_data=MY_ORDERS)],
             [InlineKeyboardButton(text="💬 Поддержка", callback_data=SUPPORT)],
         ]

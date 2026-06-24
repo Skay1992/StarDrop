@@ -9,6 +9,7 @@ from database.orders import (
 from handlers.formatters import (
     format_admin_completion_confirmation,
     format_admin_order,
+    format_admin_orders_list,
     format_completed_message,
     format_order_summary,
     format_payment_requisites,
@@ -134,6 +135,29 @@ def test_premium_order_summary_contains_duration_and_price():
     assert "Сумма к оплате: 2990 ₽" in text
 
 
+def test_one_month_premium_order_summary_and_admin_notification():
+    order = Order(
+        id=9,
+        user_id=123,
+        username="client",
+        product_type=PRODUCT_PREMIUM,
+        stars_amount=None,
+        premium_months=1,
+        telegram_username="@receiver",
+        price_rub=349,
+        status=STATUS_AWAITING_PAYMENT,
+        created_at="2026-06-24 00:00:00",
+    )
+
+    user_text = format_order_summary(order, "+79990000000", "Антон")
+    admin_text = format_admin_order(order)
+
+    assert "Срок: 1 месяц" in user_text
+    assert "Сумма к оплате: 349 ₽" in user_text
+    assert "Срок: 1 месяц" in admin_text
+    assert "Сумма: 349 ₽" in admin_text
+
+
 def test_payment_requisites_are_formatted_from_env_values():
     assert format_payment_requisites("+79990000000", "Антон") == (
         "Реквизиты для оплаты:\n\n"
@@ -146,6 +170,38 @@ def test_payment_requisites_are_formatted_from_env_values():
 
 def test_admin_completion_confirmation_text():
     assert format_admin_completion_confirmation(7) == "Подтвердить выполнение заказа #7?"
+
+
+def test_admin_orders_list_contains_service_recipient_price_status_and_date():
+    order = Order(
+        id=7,
+        user_id=123,
+        username="client",
+        product_type=PRODUCT_STARS,
+        stars_amount=50,
+        premium_months=None,
+        telegram_username="@receiver",
+        price_rub=65,
+        status=STATUS_PENDING_REVIEW,
+        created_at="2026-06-24 00:00:00",
+    )
+
+    text = format_admin_orders_list([order], "🟠 Заказы на проверке")
+
+    assert "🟠 Заказы на проверке" in text
+    assert "#7 · Telegram Stars" in text
+    assert "Количество: 50 Stars" in text
+    assert "Получатель: @receiver" in text
+    assert "Сумма: 65 ₽" in text
+    assert "Статус: 🟠 Проверяем оплату" in text
+    assert "Дата: 2026-06-24 00:00:00" in text
+
+
+def test_admin_orders_list_empty_state():
+    assert format_admin_orders_list([], "🟠 Заказы на проверке") == (
+        "🟠 Заказы на проверке\n\n"
+        "Заказов нет."
+    )
 
 
 def test_completed_stars_message_mentions_amount_and_recipient():

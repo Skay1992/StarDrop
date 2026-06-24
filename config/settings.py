@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 TOKEN_PLACEHOLDER = "PASTE_YOUR_BOT_TOKEN_HERE"
 ADMIN_ID_PLACEHOLDER = "PASTE_YOUR_TELEGRAM_ID_HERE"
+DEFAULT_REVIEWS_URL = "https://t.me/stardrop_reviews"
 ENV_HELP = (
     "Заполните файл .env: укажите BOT_TOKEN от @BotFather "
     "и числовой ADMIN_ID вашего Telegram аккаунта."
@@ -20,6 +21,7 @@ class Settings:
     admin_id: int
     sbp_phone: Optional[str] = None
     sbp_name: Optional[str] = None
+    reviews_url: str = DEFAULT_REVIEWS_URL
     db_path: Path = Path("stardrop.sqlite3")
 
 
@@ -30,6 +32,7 @@ def load_settings(env_file: Optional[Path] = None) -> Settings:
     admin_id = os.getenv("ADMIN_ID")
     sbp_phone = _optional_env("SBP_PHONE")
     sbp_name = _optional_env("SBP_NAME")
+    reviews_url = _optional_env("REVIEWS_URL") or DEFAULT_REVIEWS_URL
 
     if not bot_token:
         raise RuntimeError(f"BOT_TOKEN не заполнен. {ENV_HELP}")
@@ -50,6 +53,7 @@ def load_settings(env_file: Optional[Path] = None) -> Settings:
         admin_id=parsed_admin_id,
         sbp_phone=sbp_phone,
         sbp_name=sbp_name,
+        reviews_url=reviews_url,
     )
 
 

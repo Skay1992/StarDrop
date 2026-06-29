@@ -29,3 +29,15 @@ def init_db(db_path: Path = DEFAULT_DB_PATH) -> None:
             )
             """
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS support_tickets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                username TEXT,
+                message TEXT NOT NULL,
+                status TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )

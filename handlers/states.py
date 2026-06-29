@@ -8,3 +8,11 @@ class StarsOrderState(StatesGroup):
 
 class PremiumOrderState(StatesGroup):
     telegram_username = State()
+
+
+class SupportUserState(StatesGroup):
+    message = State()
+
+
+class SupportAdminState(StatesGroup):
+    reply = State()

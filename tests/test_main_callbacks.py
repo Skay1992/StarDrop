@@ -4,15 +4,20 @@ from handlers.orders import list_orders
 from handlers.premium import premium_start
 from handlers.stars import stars_start
 from handlers.support import SUPPORT_TEXT, support
+from handlers.states import SupportUserState
 from keyboards.callbacks import BUY_PREMIUM, BUY_STARS, MY_ORDERS, SUPPORT
 
 
 class FakeState:
     def __init__(self):
         self.cleared = False
+        self.current_state = None
 
     async def clear(self):
         self.cleared = True
+
+    async def set_state(self, state):
+        self.current_state = state
 
 
 class FakeMessage:
@@ -70,12 +75,19 @@ def test_buy_premium_callback_answers_and_opens_premium_menu():
 
 def test_support_callback_answers_and_opens_support(monkeypatch):
     callback = FakeCallback(SUPPORT)
+    state = FakeState()
 
-    asyncio.run(support(callback))
+    asyncio.run(support(callback, state))
 
     assert callback.answers
+    assert callback.message.edits[0]["text"] == (
+        "💬 Поддержка StarDrop\n\n"
+        "Напишите ваш вопрос одним сообщением.\n"
+        "Мы ответим как можно быстрее."
+    )
     assert callback.message.edits[0]["text"] == SUPPORT_TEXT
     assert callback.message.edits[0]["reply_markup"] is not None
+    assert state.current_state == SupportUserState.message
 
 
 def test_my_orders_callback_answers_and_opens_orders(monkeypatch):

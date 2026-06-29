@@ -24,6 +24,8 @@ def test_username_validation():
     assert is_valid_telegram_username("@username")
     assert not is_valid_telegram_username("username")
     assert not is_valid_telegram_username("@")
+    assert not is_valid_telegram_username("@a")
+    assert not is_valid_telegram_username("@user name")
 
 
 def test_user_order_summary_contains_russian_service_details_and_price():
@@ -232,7 +234,7 @@ def test_admin_orders_list_contains_service_recipient_price_status_and_date():
 
     assert "🟠 Заказы на проверке" in text
     assert "#7 · Telegram Stars" in text
-    assert "Количество: 50 Stars" in text
+    assert "Количество: 50 звезд" in text
     assert "Получатель: @receiver" in text
     assert "Сумма: 65 ₽" in text
     assert "Статус: 🟠 Проверяем оплату" in text
@@ -332,10 +334,10 @@ def test_orders_list_uses_compact_product_cards_without_technical_statuses():
 
     assert format_orders_list([stars_order, premium_order]) == (
         "📦 Последние заказы\n\n"
-        "#12 — ⭐ 500 Stars — 650 ₽\n"
+        "#12 — ⭐ 500 звезд — 650 ₽\n"
         "Статус: 🟢 Выполнен\n"
         "Получатель: @stars_receiver\n\n"
-        "#11 — 💎 Premium 1 мес. — 349 ₽\n"
+        "#11 — 💎 Telegram Premium, 1 мес. — 349 ₽\n"
         "Статус: 🟠 Проверяем оплату\n"
         "Получатель: @premium_receiver"
     )

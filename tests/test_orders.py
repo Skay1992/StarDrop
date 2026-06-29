@@ -26,6 +26,32 @@ def test_order_creation_stores_price(tmp_path):
     assert order.status == STATUS_AWAITING_PAYMENT
 
 
+def test_order_creation_is_limited_to_one_order_per_five_seconds(tmp_path):
+    repository = OrderRepository(tmp_path / "orders.sqlite3")
+
+    first, first_created = repository.create_order_if_allowed(
+        user_id=123,
+        username="client",
+        product_type=PRODUCT_STARS,
+        stars_amount=50,
+        telegram_username="@receiver",
+        price_rub=65,
+    )
+    repeated, repeated_created = repository.create_order_if_allowed(
+        user_id=123,
+        username="client",
+        product_type=PRODUCT_STARS,
+        stars_amount=100,
+        telegram_username="@receiver",
+        price_rub=130,
+    )
+
+    assert first_created is True
+    assert repeated_created is False
+    assert repeated == first
+    assert len(repository.list_user_orders(123)) == 1
+
+
 def test_order_status_transitions(tmp_path):
     repository = OrderRepository(tmp_path / "orders.sqlite3")
     order = repository.create_order(
@@ -45,6 +71,35 @@ def test_order_status_transitions(tmp_path):
 
     order = repository.update_status(order.id, STATUS_CANCELLED)
     assert order.status == STATUS_CANCELLED
+
+
+def test_order_status_transition_only_succeeds_from_expected_status(tmp_path):
+    repository = OrderRepository(tmp_path / "orders.sqlite3")
+    order = repository.create_order(
+        user_id=123,
+        username="client",
+        product_type=PRODUCT_STARS,
+        stars_amount=50,
+        telegram_username="@receiver",
+        price_rub=65,
+        status=STATUS_PENDING_REVIEW,
+    )
+
+    completed = repository.transition_status(
+        order.id,
+        STATUS_PENDING_REVIEW,
+        STATUS_COMPLETED,
+    )
+    repeated = repository.transition_status(
+        order.id,
+        STATUS_PENDING_REVIEW,
+        STATUS_CANCELLED,
+    )
+
+    assert completed is not None
+    assert completed.status == STATUS_COMPLETED
+    assert repeated is None
+    assert repository.get_order(order.id).status == STATUS_COMPLETED
 
 
 def test_user_order_listing_returns_latest_first(tmp_path):

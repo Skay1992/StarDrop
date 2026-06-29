@@ -18,7 +18,7 @@ def test_main_menu_callback_data():
     buttons = [row[0] for row in keyboard.inline_keyboard]
 
     assert [(button.text, button.callback_data, button.url) for button in buttons] == [
-        ("⭐ Купить Stars", BUY_STARS, None),
+        ("⭐ Купить звезды", BUY_STARS, None),
         ("💎 Telegram Premium", BUY_PREMIUM, None),
         ("⭐ Отзывы", None, "https://t.me/stardrop_reviews"),
         ("👤 Личный кабинет", CABINET, None),

@@ -7,7 +7,7 @@ from keyboards.callbacks import BUY_PREMIUM, BUY_STARS, CABINET, MAIN_MENU, SUPP
 def main_menu_keyboard(reviews_url: str = DEFAULT_REVIEWS_URL) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="⭐ Купить Stars", callback_data=BUY_STARS)],
+            [InlineKeyboardButton(text="⭐ Купить звезды", callback_data=BUY_STARS)],
             [InlineKeyboardButton(text="💎 Telegram Premium", callback_data=BUY_PREMIUM)],
             [InlineKeyboardButton(text="⭐ Отзывы", url=reviews_url)],
             [InlineKeyboardButton(text="👤 Личный кабинет", callback_data=CABINET)],

@@ -5,16 +5,11 @@ from aiogram.types import CallbackQuery
 
 from config.pricing import premium_duration_label
 from database.orders import OrderRepository, PRODUCT_PREMIUM
-from database.support import (
-    STATUS_ANSWERED,
-    STATUS_CLOSED,
-    STATUS_OPEN,
-    SupportTicketRepository,
-)
+from database.support import SupportTicketRepository
 from database.statistics import StatisticsRepository
 from database.users import User, UserRepository
 from handlers.callbacks import answer_callback, log_callback
-from handlers.formatters import status_label
+from handlers.formatters import status_label, support_status_label
 from keyboards.cabinet import (
     cabinet_back_keyboard,
     cabinet_keyboard,
@@ -67,23 +62,15 @@ def format_order_history(orders) -> str:
         if order.product_type == PRODUCT_PREMIUM:
             parts.extend(
                 [
-                    "💎 Premium",
+                    "💎 Telegram Premium",
                     premium_duration_label(order.premium_months),
                 ]
             )
         else:
-            parts.append(f"⭐ {order.stars_amount} Stars")
+            parts.append(f"⭐ {order.stars_amount} звезд")
         parts.extend([f"{order.price_rub} ₽", status_label(order.status)])
     parts.append("━━━━━━━━━━━━━━")
     return "\n\n".join(parts)
-
-
-def ticket_status_label(status: str) -> str:
-    return {
-        STATUS_OPEN: "🟠 Открыто",
-        STATUS_ANSWERED: "🟢 Ответ получен",
-        STATUS_CLOSED: "⚫ Закрыто",
-    }.get(status, "⚪ Неизвестно")
 
 
 def format_ticket_history(tickets) -> str:
@@ -99,7 +86,7 @@ def format_ticket_history(tickets) -> str:
         parts.extend(
             [
                 "━━━━━━━━━━━━━━",
-                f"#{ticket.id}\n{ticket_status_label(ticket.status)}",
+                f"#{ticket.id}\n{support_status_label(ticket.status)}",
                 preview,
             ]
         )
@@ -157,7 +144,7 @@ async def show_ticket_details(callback: CallbackQuery) -> None:
 
     text = (
         f"💬 Обращение #{ticket.id}\n\n"
-        f"Статус: {ticket_status_label(ticket.status)}\n\n"
+        f"Статус: {support_status_label(ticket.status)}\n\n"
         "Сообщение:\n"
         f"{ticket.message}"
     )
@@ -200,8 +187,8 @@ async def show_about(callback: CallbackQuery) -> None:
     await callback.message.edit_text(
         "🚀 StarDrop\n\n"
         "Версия\n\n"
-        "v1.2\n\n"
-        "Продано Stars:\n"
+        "v1.3\n\n"
+        "Продано звезд:\n"
         f"{stats.total_stars}\n\n"
         "Выполнено заказов:\n"
         f"{stats.completed_orders}\n\n"

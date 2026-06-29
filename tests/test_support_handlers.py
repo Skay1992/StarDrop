@@ -243,7 +243,7 @@ def test_user_can_view_existing_open_ticket(monkeypatch):
     assert callback.answers
     assert callback.message.edits[0]["text"] == (
         "💬 Обращение #7\n\n"
-        "Статус: 🟡 Открыто\n\n"
+        "Статус: 🟠 Открыто\n\n"
         "Сообщение:\n"
         "Когда придут звезды?"
     )
@@ -355,7 +355,7 @@ def test_admin_can_list_last_support_tickets(monkeypatch):
     assert message.answers[0]["text"] == (
         "💬 Последние обращения\n\n"
         "#7 — @client\n"
-        "Статус: 🟡 Новое\n"
+        "Статус: 🟠 Открыто\n"
         "Сообщение: Когда придут звезды?\n"
         "Дата: 2026-06-29 12:00:00"
     )
@@ -408,7 +408,7 @@ def test_admin_can_open_support_ticket_card(monkeypatch):
     edit = callback.message.edits[0]
     assert edit["text"].startswith("💬 Обращение #7")
     assert "📦 Последний заказ:\n#42" in edit["text"]
-    assert "Статус: 🟡 Новое" in edit["text"]
+    assert "Статус: 🟠 Открыто" in edit["text"]
     buttons = [button for row in edit["reply_markup"].inline_keyboard for button in row]
     assert buttons[0].callback_data == "support:reply:7"
     assert buttons[1].callback_data == "support:order:7"
@@ -433,18 +433,9 @@ def test_support_admin_actions_are_denied_for_regular_user():
     asyncio.run(admin_support_list(list_callback, settings))
     asyncio.run(support_tickets_command(command_message, settings))
 
-    assert reply_callback.answers[0] == {
-        "text": "⛔ Доступ запрещен.",
-        "show_alert": True,
-    }
-    assert close_callback.answers[0] == {
-        "text": "⛔ Доступ запрещен.",
-        "show_alert": True,
-    }
+    assert reply_callback.answers[0] == {"text": None, "show_alert": None}
+    assert close_callback.answers[0] == {"text": None, "show_alert": None}
     for callback in (order_callback, ticket_callback, menu_callback, list_callback):
-        assert callback.answers[0] == {
-            "text": "⛔ Доступ запрещен.",
-            "show_alert": True,
-        }
+        assert callback.answers[0] == {"text": None, "show_alert": None}
     assert command_message.answers[0]["text"] == "⛔ Доступ запрещен."
     assert state.current_state is None

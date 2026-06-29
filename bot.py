@@ -1,21 +1,32 @@
 import asyncio
+import logging
+import sqlite3
 import sys
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from config.settings import load_settings
+from config.logging_config import setup_logging
 from database.db import init_db
 from handlers import admin, cabinet, diagnostics, orders, premium, stars, start, support
+from handlers.errors import handle_error
+
+
+logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
     settings = load_settings()
-    init_db(settings.db_path)
+    try:
+        init_db(settings.db_path)
+    except sqlite3.Error:
+        logger.exception("База данных недоступна при запуске")
 
     bot = Bot(token=settings.bot_token)
     dp = Dispatcher(storage=MemoryStorage())
     dp["settings"] = settings
+    dp.errors.register(handle_error)
 
     dp.include_router(start.router)
     dp.include_router(stars.router)
@@ -31,6 +42,7 @@ async def main() -> None:
 
 
 def run() -> None:
+    setup_logging()
     try:
         asyncio.run(main())
     except RuntimeError as exc:

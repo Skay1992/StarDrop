@@ -50,6 +50,11 @@ class FakeRepository:
         assert order_id == 7
         return make_order(status)
 
+    def transition_status(self, order_id, expected_status, new_status):
+        assert order_id == 7
+        assert expected_status == STATUS_PENDING_REVIEW
+        return make_order(new_status)
+
 
 class FakeCompletionUserRepository:
     recorded = None
@@ -119,6 +124,14 @@ class ConfirmationOnlyRepository:
 
     def update_status(self, order_id, status):
         raise AssertionError("Статус нельзя менять до подтверждения")
+
+
+class ProcessedOrderRepository:
+    def get_order(self, order_id):
+        return make_order(STATUS_COMPLETED)
+
+    def update_status(self, order_id, status):
+        raise AssertionError("Обработанный заказ нельзя изменять повторно")
 
 
 class FakeStatisticsRepository:
@@ -222,8 +235,8 @@ def test_admin_statistics_screen_uses_live_snapshot(monkeypatch):
     assert "Сегодня" in text
     assert "📦 Заказов: 3" in text
     assert "💰 Выручка: 1779 ₽" in text
-    assert "⭐ Stars: 1100" in text
-    assert "💎 Premium: 1 мес." in text
+    assert "⭐ Звезд: 1100" in text
+    assert "💎 Telegram Premium: 1 мес." in text
     assert "💬 Обращения: 2" in text
     assert "📦 Всего заказов: 20" in text
     assert "👥 Пользователей: 12" in text
@@ -279,10 +292,7 @@ def test_new_admin_sections_are_denied_for_regular_user():
 
         asyncio.run(handler(callback, settings))
 
-        assert callback.answers[0] == {
-            "text": "⛔ Доступ запрещен.",
-            "show_alert": True,
-        }
+        assert callback.answers[0] == {"text": None, "show_alert": None}
         assert not callback.message.edits
 
 
@@ -336,3 +346,17 @@ def test_admin_cancelled_order_message_has_main_menu_and_support(monkeypatch):
     assert buttons[0][0].text == "💬 Поддержка"
     assert buttons[1][0].text == "🏠 Главное меню"
     assert callback.answers[-1]["text"] == "Отменено."
+
+
+def test_admin_cannot_cancel_an_already_processed_order(monkeypatch):
+    monkeypatch.setattr("handlers.admin.OrderRepository", ProcessedOrderRepository)
+    callback = FakeCallback("admin:cancel:7")
+    settings = SimpleNamespace(admin_id=999)
+
+    asyncio.run(admin_cancel_order(callback, settings))
+
+    assert callback.answers == [
+        {"text": "Заказ уже обработан.", "show_alert": True}
+    ]
+    assert not callback.bot.messages
+    assert not callback.message.edits

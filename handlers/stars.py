@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -8,7 +10,12 @@ from database.orders import OrderRepository, PRODUCT_STARS
 from handlers.callbacks import answer_callback, log_callback
 from handlers.formatters import format_order_summary
 from handlers.states import StarsOrderState
-from handlers.texts import CUSTOM_STARS_PROMPT, RECIPIENT_PROMPT, USERNAME_ERROR
+from handlers.texts import (
+    CUSTOM_STARS_PROMPT,
+    ORDER_COOLDOWN_TEXT,
+    RECIPIENT_PROMPT,
+    USERNAME_ERROR,
+)
 from handlers.validators import is_valid_telegram_username
 from keyboards.callbacks import BUY_STARS, LEGACY_BUY_STARS
 from keyboards.main import back_to_menu_keyboard
@@ -17,6 +24,7 @@ from keyboards.stars import stars_keyboard
 
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 
 @router.callback_query(F.data.in_({BUY_STARS, LEGACY_BUY_STARS}))
@@ -59,20 +67,20 @@ async def stars_custom_amount_entered(message: Message, state: FSMContext) -> No
         amount = int(message.text.strip())
     except (AttributeError, ValueError):
         await message.answer(
-            "Введите количество цифрами.",
+            "❌ Введите количество цифрами.",
             reply_markup=back_to_menu_keyboard(),
         )
         return
 
     if amount < MIN_CUSTOM_STARS:
         await message.answer(
-            f"Минимальное количество — {MIN_CUSTOM_STARS} Stars.",
+            f"❌ Минимальное количество — {MIN_CUSTOM_STARS} звезд.",
             reply_markup=back_to_menu_keyboard(),
         )
         return
     if amount > MAX_CUSTOM_STARS:
         await message.answer(
-            f"Максимальное количество — {MAX_CUSTOM_STARS} Stars.",
+            f"❌ Максимальное количество — {MAX_CUSTOM_STARS} звезд.",
             reply_markup=back_to_menu_keyboard(),
         )
         return
@@ -86,14 +94,14 @@ async def stars_custom_amount_entered(message: Message, state: FSMContext) -> No
 
 @router.message(StarsOrderState.telegram_username)
 async def stars_username_entered(message: Message, state: FSMContext, settings: Settings) -> None:
-    telegram_username = message.text.strip() if message.text else ""
+    telegram_username = message.text if message.text else ""
     if not is_valid_telegram_username(telegram_username):
         await message.answer(USERNAME_ERROR, reply_markup=back_to_menu_keyboard())
         return
 
     data = await state.get_data()
     repository = OrderRepository()
-    order = repository.create_order(
+    order, created = repository.create_order_if_allowed(
         user_id=message.from_user.id,
         username=message.from_user.username,
         product_type=PRODUCT_STARS,
@@ -101,8 +109,15 @@ async def stars_username_entered(message: Message, state: FSMContext, settings: 
         telegram_username=telegram_username,
         price_rub=data["price_rub"],
     )
+    if not created:
+        await message.answer(
+            ORDER_COOLDOWN_TEXT,
+            reply_markup=back_to_menu_keyboard(),
+        )
+        return
 
     await state.clear()
+    logger.info("Создан заказ №%s пользователя %s", order.id, order.user_id)
     await message.answer(
         format_order_summary(order, settings.sbp_phone, settings.sbp_name),
         reply_markup=payment_keyboard(order.id),

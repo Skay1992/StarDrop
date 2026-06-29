@@ -35,6 +35,15 @@ class FakeRepository:
         assert order_id == 7
         return make_order(status)
 
+    def transition_status(self, order_id, expected_status, new_status):
+        assert order_id == 7
+        return make_order(new_status)
+
+
+class AlreadyPaidRepository(FakeRepository):
+    def get_order(self, order_id):
+        return make_order(STATUS_PENDING_REVIEW)
+
 
 class FakeMessage:
     def __init__(self):
@@ -81,6 +90,23 @@ def test_paid_order_shows_review_message_with_orders_and_home_buttons(monkeypatc
         "📦 Мои заказы",
         "🏠 Главное меню",
     ]
+
+
+def test_repeated_paid_callback_reports_that_notification_was_received(monkeypatch):
+    monkeypatch.setattr("handlers.orders.OrderRepository", AlreadyPaidRepository)
+    callback = FakeCallback()
+    settings = SimpleNamespace(admin_id=999)
+
+    asyncio.run(order_paid(callback, settings))
+
+    assert callback.answers == [
+        {
+            "text": "Мы уже получили уведомление об оплате.\n\nОжидайте проверки.",
+            "show_alert": True,
+        }
+    ]
+    assert not callback.message.edits
+    assert not callback.bot.messages
 
 
 def test_cancelled_order_shows_support_and_home_buttons(monkeypatch):

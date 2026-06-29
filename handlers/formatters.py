@@ -10,6 +10,7 @@ from database.orders import (
     STATUS_COMPLETED,
     STATUS_PENDING_REVIEW,
 )
+from database.support import STATUS_ANSWERED, STATUS_CLOSED, STATUS_OPEN
 
 
 STATUS_LABELS = {
@@ -18,12 +19,21 @@ STATUS_LABELS = {
     STATUS_COMPLETED: "🟢 Выполнен",
     STATUS_CANCELLED: "🔴 Отменен",
 }
+SUPPORT_STATUS_LABELS = {
+    STATUS_OPEN: "🟠 Открыто",
+    STATUS_ANSWERED: "🟢 Ответ получен",
+    STATUS_CLOSED: "⚫ Закрыто",
+}
 
 PAYMENT_UNAVAILABLE_TEXT = "Реквизиты временно недоступны. Обратитесь в поддержку."
 
 
 def status_label(status: str) -> str:
     return STATUS_LABELS.get(status, "⚪ Неизвестен")
+
+
+def support_status_label(status: str) -> str:
+    return SUPPORT_STATUS_LABELS.get(status, "⚪ Неизвестно")
 
 
 def product_label(order: Order) -> str:
@@ -36,7 +46,7 @@ def product_label(order: Order) -> str:
 
 def product_details(order: Order) -> str:
     if order.product_type == PRODUCT_STARS:
-        return f"Количество: {order.stars_amount} Stars"
+        return f"Количество: {order.stars_amount} звезд"
     if order.product_type == PRODUCT_PREMIUM:
         return f"Срок: {premium_duration_label(order.premium_months)}"
     return "Услуга: неизвестно"
@@ -138,9 +148,9 @@ def format_orders_list(orders: Iterable[Order]) -> str:
     lines = ["📦 Последние заказы"]
     for order in orders:
         if order.product_type == PRODUCT_STARS:
-            service = f"⭐ {order.stars_amount} Stars"
+            service = f"⭐ {order.stars_amount} звезд"
         else:
-            service = f"💎 Premium {order.premium_months} мес."
+            service = f"💎 Telegram Premium, {order.premium_months} мес."
         lines.extend(
             [
                 "",

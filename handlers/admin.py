@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from aiogram import F, Router
@@ -21,6 +22,7 @@ from handlers.formatters import (
     format_cancelled_message,
     format_completed_message,
 )
+from handlers.security import require_admin_callback
 from keyboards.admin import (
     admin_back_keyboard,
     admin_complete_confirmation_keyboard,
@@ -45,6 +47,7 @@ from keyboards.orders import order_cancelled_keyboard, order_completed_keyboard
 
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 ADMIN_PANEL_TEXT = (
     "━━━━━━━━━━━━━━\n\n"
@@ -71,15 +74,15 @@ def format_statistics(stats: StatisticsSnapshot) -> str:
         "Сегодня\n\n"
         f"📦 Заказов: {stats.today_orders}\n"
         f"💰 Выручка: {stats.today_revenue} ₽\n"
-        f"⭐ Stars: {stats.today_stars}\n"
-        f"💎 Premium: {stats.today_premium_months} мес.\n"
+        f"⭐ Звезд: {stats.today_stars}\n"
+        f"💎 Telegram Premium: {stats.today_premium_months} мес.\n"
         f"💬 Обращения: {stats.today_tickets}\n\n"
         "━━━━━━━━━━━━━━\n\n"
         "За всё время\n\n"
         f"📦 Всего заказов: {stats.total_orders}\n"
         f"👥 Пользователей: {stats.total_users}\n"
-        f"⭐ Продано Stars: {stats.total_stars}\n"
-        f"💎 Продано Premium: {stats.total_premium_months} мес.\n"
+        f"⭐ Продано звезд: {stats.total_stars}\n"
+        f"💎 Telegram Premium: {stats.total_premium_months} мес.\n"
         f"💰 Общая выручка: {stats.total_revenue} ₽"
     )
 
@@ -120,8 +123,7 @@ async def admin_command(message: Message, settings: Settings) -> None:
 
 @router.callback_query(F.data == ADMIN_MENU)
 async def admin_menu(callback: CallbackQuery, settings: Settings) -> None:
-    if not _is_admin(callback.from_user.id, settings):
-        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     await answer_callback(callback)
@@ -131,8 +133,7 @@ async def admin_menu(callback: CallbackQuery, settings: Settings) -> None:
 
 @router.callback_query(F.data == ADMIN_ORDERS)
 async def admin_orders_menu(callback: CallbackQuery, settings: Settings) -> None:
-    if not _is_admin(callback.from_user.id, settings):
-        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     await answer_callback(callback)
@@ -144,8 +145,7 @@ async def admin_orders_menu(callback: CallbackQuery, settings: Settings) -> None
 
 @router.callback_query(F.data == ADMIN_STATISTICS)
 async def admin_statistics(callback: CallbackQuery, settings: Settings) -> None:
-    if not _is_admin(callback.from_user.id, settings):
-        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     await answer_callback(callback)
@@ -158,8 +158,7 @@ async def admin_statistics(callback: CallbackQuery, settings: Settings) -> None:
 
 @router.callback_query(F.data == ADMIN_USERS)
 async def admin_users(callback: CallbackQuery, settings: Settings) -> None:
-    if not _is_admin(callback.from_user.id, settings):
-        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     await answer_callback(callback)
@@ -173,8 +172,7 @@ async def admin_users(callback: CallbackQuery, settings: Settings) -> None:
 
 @router.callback_query(F.data.in_({ADMIN_PROMOCODES, ADMIN_SETTINGS}))
 async def admin_stub(callback: CallbackQuery, settings: Settings) -> None:
-    if not _is_admin(callback.from_user.id, settings):
-        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     await answer_callback(callback)
@@ -186,8 +184,7 @@ async def admin_stub(callback: CallbackQuery, settings: Settings) -> None:
 
 @router.callback_query(F.data.startswith("admin:list:"))
 async def admin_list_orders(callback: CallbackQuery, settings: Settings) -> None:
-    if not _is_admin(callback.from_user.id, settings):
-        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     await answer_callback(callback)
@@ -203,8 +200,7 @@ async def admin_list_orders(callback: CallbackQuery, settings: Settings) -> None
 
 @router.callback_query(F.data.startswith("admin:complete:"))
 async def admin_complete_order(callback: CallbackQuery, settings: Settings) -> None:
-    if callback.from_user.id != settings.admin_id:
-        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     order_id = int(callback.data.split(":")[-1])
@@ -212,6 +208,9 @@ async def admin_complete_order(callback: CallbackQuery, settings: Settings) -> N
     order = repository.get_order(order_id)
     if order is None:
         await callback.answer("Заказ не найден.", show_alert=True)
+        return
+    if order.status != STATUS_PENDING_REVIEW:
+        await callback.answer("Заказ уже обработан.", show_alert=True)
         return
 
     await callback.message.edit_text(
@@ -223,8 +222,7 @@ async def admin_complete_order(callback: CallbackQuery, settings: Settings) -> N
 
 @router.callback_query(F.data.startswith("admin:back:"))
 async def admin_back_to_order(callback: CallbackQuery, settings: Settings) -> None:
-    if callback.from_user.id != settings.admin_id:
-        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     order_id = int(callback.data.split(":")[-1])
@@ -243,8 +241,7 @@ async def admin_back_to_order(callback: CallbackQuery, settings: Settings) -> No
 
 @router.callback_query(F.data.startswith("admin:confirm_complete:"))
 async def admin_confirm_complete_order(callback: CallbackQuery, settings: Settings) -> None:
-    if callback.from_user.id != settings.admin_id:
-        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     order_id = int(callback.data.split(":")[-1])
@@ -257,12 +254,17 @@ async def admin_confirm_complete_order(callback: CallbackQuery, settings: Settin
         await callback.answer("Заказ уже обработан.", show_alert=True)
         return
 
-    order = repository.update_status(order_id, STATUS_COMPLETED)
+    order = repository.transition_status(
+        order_id,
+        STATUS_PENDING_REVIEW,
+        STATUS_COMPLETED,
+    )
     if order is None:
         await callback.answer("Заказ не найден.", show_alert=True)
         return
 
     UserRepository().record_completed_order(order)
+    logger.info("Заказ №%s выполнен", order.id)
 
     await callback.bot.send_message(
         order.user_id,
@@ -275,16 +277,29 @@ async def admin_confirm_complete_order(callback: CallbackQuery, settings: Settin
 
 @router.callback_query(F.data.startswith("admin:cancel:"))
 async def admin_cancel_order(callback: CallbackQuery, settings: Settings) -> None:
-    if callback.from_user.id != settings.admin_id:
-        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     order_id = int(callback.data.split(":")[-1])
     repository = OrderRepository()
-    order = repository.update_status(order_id, STATUS_CANCELLED)
-    if order is None:
+    current_order = repository.get_order(order_id)
+    if current_order is None:
         await callback.answer("Заказ не найден.", show_alert=True)
         return
+    if current_order.status != STATUS_PENDING_REVIEW:
+        await callback.answer("Заказ уже обработан.", show_alert=True)
+        return
+
+    order = repository.transition_status(
+        order_id,
+        STATUS_PENDING_REVIEW,
+        STATUS_CANCELLED,
+    )
+    if order is None:
+        await callback.answer("Заказ уже обработан.", show_alert=True)
+        return
+
+    logger.info("Заказ №%s отменен администратором", order.id)
 
     await callback.bot.send_message(
         order.user_id,

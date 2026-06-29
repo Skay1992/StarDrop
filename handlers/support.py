@@ -1,3 +1,4 @@
+import logging
 from typing import Iterable, Optional
 
 from aiogram import F, Router
@@ -15,7 +16,13 @@ from database.support import (
     SupportTicketRepository,
 )
 from handlers.callbacks import answer_callback, log_callback
-from handlers.formatters import format_admin_order, product_label, status_label
+from handlers.formatters import (
+    format_admin_order,
+    product_label,
+    status_label,
+    support_status_label,
+)
+from handlers.security import require_admin_callback
 from handlers.states import SupportAdminState, SupportUserState
 from keyboards.callbacks import (
     ADMIN_SUPPORT,
@@ -38,6 +45,7 @@ from keyboards.support import (
 
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 SUPPORT_TEXT = (
     "💬 Поддержка StarDrop\n\n"
@@ -46,11 +54,6 @@ SUPPORT_TEXT = (
     "⏱ Обычно отвечаем в течение 5–15 минут."
 )
 
-SUPPORT_STATUS_LABELS = {
-    STATUS_OPEN: "🟡 Новое",
-    STATUS_ANSWERED: "🟢 Ответ дан",
-    STATUS_CLOSED: "⚫ Закрыто",
-}
 MAX_SUPPORT_MESSAGE_LENGTH = 3000
 ADMIN_SUPPORT_TEXT = "💬 Поддержка StarDrop\n\nВыберите список обращений."
 ADMIN_SUPPORT_LISTS = {
@@ -59,10 +62,6 @@ ADMIN_SUPPORT_LISTS = {
     ADMIN_SUPPORT_CLOSED: (STATUS_CLOSED, "🔒 Закрытые обращения"),
     ADMIN_SUPPORT_ALL: (None, "📋 Все обращения"),
 }
-
-
-def support_status_label(status: str) -> str:
-    return SUPPORT_STATUS_LABELS.get(status, "⚪ Неизвестен")
 
 
 def format_admin_ticket(
@@ -126,8 +125,7 @@ def format_support_tickets(
 
 @router.callback_query(F.data == ADMIN_SUPPORT)
 async def admin_support_menu(callback: CallbackQuery, settings: Settings) -> None:
-    if callback.from_user.id != settings.admin_id:
-        await callback.answer("⛔ Доступ запрещен.", show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     await callback.answer()
@@ -139,8 +137,7 @@ async def admin_support_menu(callback: CallbackQuery, settings: Settings) -> Non
 
 @router.callback_query(F.data.startswith("admin:support:list:"))
 async def admin_support_list(callback: CallbackQuery, settings: Settings) -> None:
-    if callback.from_user.id != settings.admin_id:
-        await callback.answer("⛔ Доступ запрещен.", show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     status, title = ADMIN_SUPPORT_LISTS.get(
@@ -157,8 +154,7 @@ async def admin_support_list(callback: CallbackQuery, settings: Settings) -> Non
 
 @router.callback_query(F.data.startswith("support:admin:view:"))
 async def admin_view_ticket(callback: CallbackQuery, settings: Settings) -> None:
-    if callback.from_user.id != settings.admin_id:
-        await callback.answer("⛔ Доступ запрещен.", show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     ticket_id = int(callback.data.split(":")[-1])
@@ -216,15 +212,10 @@ async def view_own_ticket(callback: CallbackQuery) -> None:
         await callback.answer("Обращение не найдено.", show_alert=True)
         return
 
-    status = {
-        STATUS_OPEN: "🟡 Открыто",
-        STATUS_ANSWERED: "🟢 Ответ получен",
-        STATUS_CLOSED: "⚫ Закрыто",
-    }.get(ticket.status, "⚪ Неизвестно")
     await callback.answer()
     await callback.message.edit_text(
         f"💬 Обращение #{ticket.id}\n\n"
-        f"Статус: {status}\n\n"
+        f"Статус: {support_status_label(ticket.status)}\n\n"
         "Сообщение:\n"
         f"{ticket.message}",
         reply_markup=home_menu_keyboard(),
@@ -267,6 +258,11 @@ async def submit_support_ticket(message: Message, state: FSMContext, settings: S
         return
 
     await state.clear()
+    logger.info(
+        "Создано обращение №%s пользователя %s",
+        ticket.id,
+        ticket.user_id,
+    )
     await message.answer(
         "✅ Вопрос отправлен\n\nМы ответим как можно быстрее.",
         reply_markup=home_menu_keyboard(),
@@ -284,8 +280,7 @@ async def start_support_reply(
     state: FSMContext,
     settings: Settings,
 ) -> None:
-    if callback.from_user.id != settings.admin_id:
-        await callback.answer("⛔ Доступ запрещен.", show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     ticket_id = int(callback.data.split(":")[-1])
@@ -334,14 +329,14 @@ async def send_support_reply(message: Message, state: FSMContext, settings: Sett
         reply_markup=support_answer_keyboard(),
     )
     repository.answer_ticket(ticket.id, answer)
+    logger.info("Отправлен ответ на обращение №%s", ticket.id)
     await state.clear()
     await message.answer("Ответ отправлен.")
 
 
 @router.callback_query(F.data.startswith("support:order:"))
 async def open_related_order(callback: CallbackQuery, settings: Settings) -> None:
-    if callback.from_user.id != settings.admin_id:
-        await callback.answer("⛔ Доступ запрещен.", show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     ticket_id = int(callback.data.split(":")[-1])
@@ -349,6 +344,7 @@ async def open_related_order(callback: CallbackQuery, settings: Settings) -> Non
     if ticket is None:
         await callback.answer("Обращение не найдено.", show_alert=True)
         return
+
     if ticket.related_order_id is None:
         await callback.answer("У клиента пока нет заказов.", show_alert=True)
         return
@@ -367,8 +363,7 @@ async def open_related_order(callback: CallbackQuery, settings: Settings) -> Non
 
 @router.callback_query(F.data.startswith("support:close:"))
 async def close_support_ticket(callback: CallbackQuery, settings: Settings) -> None:
-    if callback.from_user.id != settings.admin_id:
-        await callback.answer("⛔ Доступ запрещен.", show_alert=True)
+    if not await require_admin_callback(callback, settings):
         return
 
     ticket_id = int(callback.data.split(":")[-1])
@@ -377,6 +372,8 @@ async def close_support_ticket(callback: CallbackQuery, settings: Settings) -> N
     if ticket is None:
         await callback.answer("Обращение не найдено.", show_alert=True)
         return
+
+    logger.info("Обращение №%s закрыто", ticket.id)
 
     await callback.message.edit_text(
         f"✅ Обращение #{ticket.id} закрыто.",

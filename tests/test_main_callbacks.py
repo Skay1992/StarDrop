@@ -1,6 +1,7 @@
 import asyncio
 
 from handlers.orders import list_orders
+from handlers.diagnostics import log_unhandled_callback
 from handlers.premium import premium_start
 from handlers.stars import stars_start
 from handlers.support import SUPPORT_TEXT, support
@@ -100,3 +101,12 @@ def test_my_orders_callback_answers_and_opens_orders(monkeypatch):
     assert callback.answers
     assert callback.message.edits[0]["text"] == "📦 Мои заказы\n\nУ вас пока нет заказов."
     assert callback.message.edits[0]["reply_markup"] is not None
+
+
+def test_unknown_callback_is_safely_answered(caplog):
+    callback = FakeCallback("unknown:callback")
+
+    asyncio.run(log_unhandled_callback(callback))
+
+    assert callback.answers == [{"text": None, "show_alert": None}]
+    assert "неизвестный callback" in caplog.text

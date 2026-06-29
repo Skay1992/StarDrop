@@ -42,11 +42,27 @@ async def order_paid(callback: CallbackQuery, settings: Settings) -> None:
     if order is None or order.user_id != callback.from_user.id:
         await callback.answer("Заказ не найден.", show_alert=True)
         return
+    if order.status == STATUS_PENDING_REVIEW:
+        await callback.answer(
+            "Мы уже получили уведомление об оплате.\n\nОжидайте проверки.",
+            show_alert=True,
+        )
+        return
     if order.status != STATUS_AWAITING_PAYMENT:
-        await callback.answer("Статус уже изменен.", show_alert=True)
+        await callback.answer("Заказ уже обработан.", show_alert=True)
         return
 
-    order = repository.update_status(order_id, STATUS_PENDING_REVIEW)
+    order = repository.transition_status(
+        order_id,
+        STATUS_AWAITING_PAYMENT,
+        STATUS_PENDING_REVIEW,
+    )
+    if order is None:
+        await callback.answer(
+            "Мы уже получили уведомление об оплате.\n\nОжидайте проверки.",
+            show_alert=True,
+        )
+        return
     await callback.message.edit_text(
         format_payment_review_message(order),
         reply_markup=order_completed_keyboard(),
@@ -72,7 +88,14 @@ async def order_cancel(callback: CallbackQuery) -> None:
         await callback.answer("Заказ уже на проверке.", show_alert=True)
         return
 
-    repository.update_status(order_id, STATUS_CANCELLED)
+    order = repository.transition_status(
+        order_id,
+        STATUS_AWAITING_PAYMENT,
+        STATUS_CANCELLED,
+    )
+    if order is None:
+        await callback.answer("Заказ уже обработан.", show_alert=True)
+        return
     await callback.message.edit_text(
         format_cancelled_message(),
         reply_markup=order_cancelled_keyboard(),

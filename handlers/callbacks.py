@@ -1,5 +1,10 @@
+import logging
+
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery
+
+
+logger = logging.getLogger(__name__)
 
 
 async def answer_callback(callback: CallbackQuery) -> None:
@@ -9,8 +14,8 @@ async def answer_callback(callback: CallbackQuery) -> None:
         message = str(exc)
         if "query is too old" not in message and "query ID is invalid" not in message:
             raise
-        print(f"CALLBACK ANSWER EXPIRED: {callback.data}", flush=True)
+        logger.warning("Истек срок callback: %s", callback.data)
 
 
 def log_callback(callback: CallbackQuery) -> None:
-    print(f"CALLBACK RECEIVED: {callback.data}", flush=True)
+    logger.info("Получен callback: %s", callback.data)

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 from database.db import DEFAULT_DB_PATH, get_connection, init_db
 
@@ -130,27 +130,34 @@ class SupportTicketRepository:
     def list_tickets(
         self,
         status: Optional[str] = None,
+        statuses: Optional[Sequence[str]] = None,
         limit: int = 10,
+        offset: int = 0,
     ) -> List[SupportTicket]:
         with get_connection(self.db_path) as connection:
-            if status is None:
+            selected_statuses = tuple(statuses or ())
+            if status is not None:
+                selected_statuses = (status,)
+
+            if not selected_statuses:
                 rows = connection.execute(
                     """
                     SELECT * FROM support_tickets
                     ORDER BY id DESC
-                    LIMIT ?
+                    LIMIT ? OFFSET ?
                     """,
-                    (limit,),
+                    (limit, offset),
                 ).fetchall()
             else:
+                placeholders = ", ".join("?" for _ in selected_statuses)
                 rows = connection.execute(
-                    """
+                    f"""
                     SELECT * FROM support_tickets
-                    WHERE status = ?
+                    WHERE status IN ({placeholders})
                     ORDER BY id DESC
-                    LIMIT ?
+                    LIMIT ? OFFSET ?
                     """,
-                    (status, limit),
+                    (*selected_statuses, limit, offset),
                 ).fetchall()
 
         return [_ticket_from_row(row) for row in rows]

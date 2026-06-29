@@ -5,8 +5,7 @@ from keyboards.callbacks import (
     ADMIN_MENU,
     ADMIN_SUPPORT,
     ADMIN_SUPPORT_ALL,
-    ADMIN_SUPPORT_ANSWERED,
-    ADMIN_SUPPORT_CLOSED,
+    ADMIN_SUPPORT_ARCHIVE,
     ADMIN_SUPPORT_OPEN,
     MAIN_MENU,
     SUPPORT,
@@ -16,22 +15,11 @@ from keyboards.callbacks import (
 def admin_support_menu_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="🟢 Открытые", callback_data=ADMIN_SUPPORT_OPEN)],
+            [InlineKeyboardButton(text="🟠 Открытые", callback_data=ADMIN_SUPPORT_OPEN)],
+            [InlineKeyboardButton(text="📂 Архив", callback_data=ADMIN_SUPPORT_ARCHIVE)],
             [
                 InlineKeyboardButton(
-                    text="✅ Отвеченные",
-                    callback_data=ADMIN_SUPPORT_ANSWERED,
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="🔒 Закрытые",
-                    callback_data=ADMIN_SUPPORT_CLOSED,
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="📋 Все обращения",
+                    text="📋 Все",
                     callback_data=ADMIN_SUPPORT_ALL,
                 )
             ],
@@ -41,19 +29,47 @@ def admin_support_menu_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def admin_support_list_keyboard(tickets: list[SupportTicket]) -> InlineKeyboardMarkup:
+def _ticket_button_text(ticket: SupportTicket) -> str:
+    client = f"@{ticket.username}" if ticket.username else f"ID {ticket.user_id}"
+    return f"💬 #{ticket.id} — {client}"
+
+
+def admin_support_list_keyboard(
+    tickets: list[SupportTicket],
+    scope: str = "open",
+    page: int = 0,
+    has_next: bool = False,
+) -> InlineKeyboardMarkup:
     rows = [
         [
             InlineKeyboardButton(
-                text=f"💬 #{ticket.id}",
+                text=_ticket_button_text(ticket),
                 callback_data=f"support:admin:view:{ticket.id}",
             )
         ]
         for ticket in tickets
     ]
-    rows.append(
-        [InlineKeyboardButton(text="↩️ К поддержке", callback_data=ADMIN_SUPPORT)]
-    )
+    pagination = []
+    callback_base = f"admin:support:list:{scope}"
+    if page > 0:
+        pagination.append(
+            InlineKeyboardButton(
+                text="⬅️ Назад",
+                callback_data=f"{callback_base}:{page - 1}",
+            )
+        )
+    if has_next:
+        pagination.append(
+            InlineKeyboardButton(
+                text="➡️ Вперёд",
+                callback_data=f"{callback_base}:{page + 1}",
+            )
+        )
+    if pagination:
+        rows.append(pagination)
+
+    rows.extend(admin_support_menu_keyboard().inline_keyboard[:3])
+    rows.append([InlineKeyboardButton(text="↩️ Админ меню", callback_data=ADMIN_MENU)])
     rows.append(
         [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)]
     )

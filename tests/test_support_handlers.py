@@ -18,11 +18,18 @@ from handlers.support import (
 )
 
 
-def make_ticket(status=STATUS_OPEN, related_order_id=42, admin_reply=None, answered_at=None):
+def make_ticket(
+    status=STATUS_OPEN,
+    related_order_id=42,
+    admin_reply=None,
+    answered_at=None,
+    ticket_id=7,
+    username="client",
+):
     return SupportTicket(
-        id=7,
+        id=ticket_id,
         user_id=123,
-        username="client",
+        username=username,
         message="Когда придут звезды?",
         related_order_id=related_order_id,
         status=status,
@@ -79,7 +86,9 @@ class FakeNoOrderTicketRepository:
 
 class FakeAdminRepository:
     updated = None
-    listed_status = None
+    listed_statuses = None
+    listed_limit = None
+    listed_offset = None
 
     def get_ticket(self, ticket_id):
         assert ticket_id == 7
@@ -97,10 +106,31 @@ class FakeAdminRepository:
             answered_at="2026-06-29 12:05:00",
         )
 
-    def list_tickets(self, status=None, limit=10):
-        FakeAdminRepository.listed_status = status
-        assert limit == 10
+    def list_tickets(self, status=None, statuses=None, limit=10, offset=0):
+        FakeAdminRepository.listed_statuses = statuses or ((status,) if status else None)
+        FakeAdminRepository.listed_limit = limit
+        FakeAdminRepository.listed_offset = offset
         return [make_ticket()]
+
+
+class PagedAdminRepository:
+    calls = []
+
+    def list_tickets(self, status=None, statuses=None, limit=10, offset=0):
+        PagedAdminRepository.calls.append(
+            {"statuses": statuses, "limit": limit, "offset": offset}
+        )
+        tickets = [
+            make_ticket(ticket_id=ticket_id, username=f"client{ticket_id}")
+            for ticket_id in range(11, 0, -1)
+        ]
+        return tickets[offset : offset + limit]
+
+
+class ClosingAdminRepository(FakeAdminRepository):
+    def list_tickets(self, status=None, statuses=None, limit=10, offset=0):
+        assert statuses == (STATUS_OPEN,)
+        return [make_ticket(ticket_id=8, username="waiting")]
 
 
 class FakeState:
@@ -305,15 +335,23 @@ def test_admin_reply_requires_text_message(monkeypatch):
 
 
 def test_admin_can_close_support_ticket(monkeypatch):
-    monkeypatch.setattr("handlers.support.SupportTicketRepository", FakeAdminRepository)
+    monkeypatch.setattr(
+        "handlers.support.SupportTicketRepository",
+        ClosingAdminRepository,
+    )
     callback = FakeCallback(data="support:close:7")
     settings = SimpleNamespace(admin_id=999)
 
     asyncio.run(close_support_ticket(callback, settings))
 
     assert FakeAdminRepository.updated == (7, STATUS_CLOSED)
-    assert callback.message.edits[0]["text"] == "✅ Обращение #7 закрыто."
-    assert callback.message.edits[0]["reply_markup"] is None
+    assert callback.message.edits[0]["text"].startswith("🟠 Открытые обращения")
+    assert "#7" not in callback.message.edits[0]["text"]
+    assert "#8 — @waiting" in callback.message.edits[0]["text"]
+    assert callback.answers[-1] == {
+        "text": "Обращение #7 закрыто.",
+        "show_alert": None,
+    }
 
 
 def test_admin_can_open_order_linked_to_ticket(monkeypatch):
@@ -361,21 +399,26 @@ def test_admin_can_list_last_support_tickets(monkeypatch):
     )
 
 
-def test_admin_can_open_support_section():
+def test_admin_support_section_shows_open_tickets_by_default(monkeypatch):
+    monkeypatch.setattr("handlers.support.SupportTicketRepository", FakeAdminRepository)
     callback = FakeCallback(data="admin:support")
     settings = SimpleNamespace(admin_id=999)
 
     asyncio.run(admin_support_menu(callback, settings))
 
     assert callback.answers
-    assert callback.message.edits[0]["text"] == (
-        "💬 Поддержка StarDrop\n\nВыберите список обращений."
-    )
-    assert [row[0].text for row in callback.message.edits[0]["reply_markup"].inline_keyboard] == [
-        "🟢 Открытые",
-        "✅ Отвеченные",
-        "🔒 Закрытые",
-        "📋 Все обращения",
+    assert FakeAdminRepository.listed_statuses == (STATUS_OPEN,)
+    assert callback.message.edits[0]["text"].startswith("🟠 Открытые обращения")
+    button_texts = [
+        button.text
+        for row in callback.message.edits[0]["reply_markup"].inline_keyboard
+        for button in row
+    ]
+    assert button_texts == [
+        "💬 #7 — @client",
+        "🟠 Открытые",
+        "📂 Архив",
+        "📋 Все",
         "↩️ Админ меню",
         "🏠 Главное меню",
     ]
@@ -388,13 +431,69 @@ def test_admin_can_filter_and_open_support_tickets(monkeypatch):
 
     asyncio.run(admin_support_list(callback, settings))
 
-    assert FakeAdminRepository.listed_status == STATUS_OPEN
+    assert FakeAdminRepository.listed_statuses == (STATUS_OPEN,)
     edit = callback.message.edits[0]
-    assert edit["text"].startswith("🟢 Открытые обращения")
+    assert edit["text"].startswith("🟠 Открытые обращения")
     assert "#7 — @client" in edit["text"]
     assert edit["reply_markup"].inline_keyboard[0][0].callback_data == "support:admin:view:7"
-    assert edit["reply_markup"].inline_keyboard[-2][0].text == "↩️ К поддержке"
+    assert edit["reply_markup"].inline_keyboard[-2][0].text == "↩️ Админ меню"
     assert edit["reply_markup"].inline_keyboard[-1][0].text == "🏠 Главное меню"
+
+
+def test_admin_support_archive_combines_answered_and_closed(monkeypatch):
+    monkeypatch.setattr("handlers.support.SupportTicketRepository", FakeAdminRepository)
+    callback = FakeCallback(data="admin:support:list:archive")
+    settings = SimpleNamespace(admin_id=999)
+
+    asyncio.run(admin_support_list(callback, settings))
+
+    assert FakeAdminRepository.listed_statuses == (STATUS_ANSWERED, STATUS_CLOSED)
+    assert callback.message.edits[0]["text"].startswith("📂 Архив обращений")
+
+
+def test_admin_support_list_is_paginated_by_ten_tickets(monkeypatch):
+    PagedAdminRepository.calls = []
+    monkeypatch.setattr("handlers.support.SupportTicketRepository", PagedAdminRepository)
+    settings = SimpleNamespace(admin_id=999)
+
+    first_page = FakeCallback(data="admin:support:list:open:0")
+    asyncio.run(admin_support_list(first_page, settings))
+
+    first_buttons = [
+        button
+        for row in first_page.message.edits[0]["reply_markup"].inline_keyboard
+        for button in row
+    ]
+    ticket_buttons = [button for button in first_buttons if button.text.startswith("💬")]
+    assert len(ticket_buttons) == 10
+    assert ticket_buttons[0].text == "💬 #11 — @client11"
+    assert ticket_buttons[-1].text == "💬 #2 — @client2"
+    assert any(
+        button.text == "➡️ Вперёд"
+        and button.callback_data == "admin:support:list:open:1"
+        for button in first_buttons
+    )
+
+    second_page = FakeCallback(data="admin:support:list:open:1")
+    asyncio.run(admin_support_list(second_page, settings))
+
+    second_buttons = [
+        button
+        for row in second_page.message.edits[0]["reply_markup"].inline_keyboard
+        for button in row
+    ]
+    assert [button.text for button in second_buttons if button.text.startswith("💬")] == [
+        "💬 #1 — @client1"
+    ]
+    assert any(
+        button.text == "⬅️ Назад"
+        and button.callback_data == "admin:support:list:open:0"
+        for button in second_buttons
+    )
+    assert PagedAdminRepository.calls == [
+        {"statuses": (STATUS_OPEN,), "limit": 11, "offset": 0},
+        {"statuses": (STATUS_OPEN,), "limit": 11, "offset": 10},
+    ]
 
 
 def test_admin_can_open_support_ticket_card(monkeypatch):

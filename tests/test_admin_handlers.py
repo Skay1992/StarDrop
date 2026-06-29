@@ -16,6 +16,7 @@ from handlers.admin import (
     admin_complete_order,
     admin_confirm_complete_order,
     admin_list_orders,
+    admin_menu,
     admin_orders_menu,
     admin_statistics,
     admin_stub,
@@ -280,10 +281,14 @@ def test_admin_promocodes_and_settings_show_placeholder():
 def test_new_admin_sections_are_denied_for_regular_user():
     settings = SimpleNamespace(admin_id=999)
     cases = [
+        (admin_menu, "admin:menu"),
         (admin_orders_menu, "admin:orders"),
         (admin_statistics, "admin:statistics"),
         (admin_users, "admin:users"),
         (admin_stub, "admin:settings"),
+        (admin_complete_order, "admin:complete:7"),
+        (admin_confirm_complete_order, "admin:confirm_complete:7"),
+        (admin_cancel_order, "admin:cancel:7"),
     ]
 
     for handler, data in cases:

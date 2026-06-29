@@ -85,10 +85,9 @@ def test_admin_support_menu_contains_status_filters():
     keyboard = admin_support_menu_keyboard()
 
     assert [(row[0].text, row[0].callback_data) for row in keyboard.inline_keyboard] == [
-        ("🟢 Открытые", "admin:support:list:open"),
-        ("✅ Отвеченные", "admin:support:list:answered"),
-        ("🔒 Закрытые", "admin:support:list:closed"),
-        ("📋 Все обращения", "admin:support:list:all"),
+        ("🟠 Открытые", "admin:support:list:open"),
+        ("📂 Архив", "admin:support:list:archive"),
+        ("📋 Все", "admin:support:list:all"),
         ("↩️ Админ меню", "admin:menu"),
         ("🏠 Главное меню", MAIN_MENU),
     ]

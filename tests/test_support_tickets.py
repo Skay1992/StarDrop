@@ -46,6 +46,17 @@ def test_support_ticket_list_returns_latest_ten(tmp_path):
     assert [ticket.id for ticket in tickets] == list(range(12, 2, -1))
 
 
+def test_support_ticket_list_uses_offset_for_next_page(tmp_path):
+    repository = SupportTicketRepository(tmp_path / "support.sqlite3")
+    for number in range(1, 23):
+        repository.create_ticket(number, f"client{number}", f"Вопрос {number}")
+
+    second_page = repository.list_tickets(limit=10, offset=10)
+
+    assert [ticket.id for ticket in second_page] == list(range(12, 2, -1))
+    assert len(second_page) == 10
+
+
 def test_second_open_ticket_is_not_created(tmp_path):
     repository = SupportTicketRepository(tmp_path / "support.sqlite3")
 
@@ -128,6 +139,23 @@ def test_support_ticket_list_can_filter_by_status(tmp_path):
     assert [ticket.id for ticket in open_tickets] == [open_ticket.id]
     assert [ticket.id for ticket in answered_tickets] == [answered_ticket.id]
     assert [ticket.id for ticket in closed_tickets] == [closed_ticket.id]
+
+
+def test_support_archive_contains_answered_and_closed_tickets_only(tmp_path):
+    repository = SupportTicketRepository(tmp_path / "support.sqlite3")
+    open_ticket = repository.create_ticket(1, "open_user", "Открыто")
+    answered_ticket = repository.create_ticket(2, "answered_user", "Отвечено")
+    closed_ticket = repository.create_ticket(3, "closed_user", "Закрыто")
+    repository.answer_ticket(answered_ticket.id, "Ответ")
+    repository.update_status(closed_ticket.id, STATUS_CLOSED)
+
+    archive = repository.list_tickets(
+        statuses=(STATUS_ANSWERED, STATUS_CLOSED),
+        limit=10,
+    )
+
+    assert [ticket.id for ticket in archive] == [closed_ticket.id, answered_ticket.id]
+    assert open_ticket.id not in {ticket.id for ticket in archive}
 
 
 def test_user_ticket_history_contains_only_own_latest_tickets(tmp_path):

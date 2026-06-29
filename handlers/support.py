@@ -27,15 +27,13 @@ from handlers.states import SupportAdminState, SupportUserState
 from keyboards.callbacks import (
     ADMIN_SUPPORT,
     ADMIN_SUPPORT_ALL,
-    ADMIN_SUPPORT_ANSWERED,
-    ADMIN_SUPPORT_CLOSED,
+    ADMIN_SUPPORT_ARCHIVE,
     ADMIN_SUPPORT_OPEN,
     LEGACY_SUPPORT,
     SUPPORT,
 )
 from keyboards.main import home_menu_keyboard
 from keyboards.support import (
-    admin_support_menu_keyboard,
     admin_support_list_keyboard,
     existing_open_ticket_keyboard,
     support_answer_keyboard,
@@ -55,12 +53,11 @@ SUPPORT_TEXT = (
 )
 
 MAX_SUPPORT_MESSAGE_LENGTH = 3000
-ADMIN_SUPPORT_TEXT = "💬 Поддержка StarDrop\n\nВыберите список обращений."
+SUPPORT_PAGE_SIZE = 10
 ADMIN_SUPPORT_LISTS = {
-    ADMIN_SUPPORT_OPEN: (STATUS_OPEN, "🟢 Открытые обращения"),
-    ADMIN_SUPPORT_ANSWERED: (STATUS_ANSWERED, "✅ Отвеченные обращения"),
-    ADMIN_SUPPORT_CLOSED: (STATUS_CLOSED, "🔒 Закрытые обращения"),
-    ADMIN_SUPPORT_ALL: (None, "📋 Все обращения"),
+    "open": ((STATUS_OPEN,), "🟠 Открытые обращения"),
+    "archive": ((STATUS_ANSWERED, STATUS_CLOSED), "📂 Архив обращений"),
+    "all": (None, "📋 Все обращения"),
 }
 
 
@@ -123,16 +120,51 @@ def format_support_tickets(
     return "\n".join(lines)
 
 
+def _support_list_location(callback_data: str) -> tuple[str, int]:
+    parts = callback_data.split(":")
+    scope = parts[3] if len(parts) > 3 else "open"
+    if scope in {"answered", "closed"}:
+        scope = "archive"
+    if scope not in ADMIN_SUPPORT_LISTS:
+        scope = "open"
+    try:
+        page = max(0, int(parts[4])) if len(parts) > 4 else 0
+    except ValueError:
+        page = 0
+    return scope, page
+
+
+async def _show_admin_support_page(
+    callback: CallbackQuery,
+    scope: str,
+    page: int,
+) -> None:
+    statuses, title = ADMIN_SUPPORT_LISTS[scope]
+    tickets = SupportTicketRepository().list_tickets(
+        statuses=statuses,
+        limit=SUPPORT_PAGE_SIZE + 1,
+        offset=page * SUPPORT_PAGE_SIZE,
+    )
+    has_next = len(tickets) > SUPPORT_PAGE_SIZE
+    visible_tickets = tickets[:SUPPORT_PAGE_SIZE]
+    await callback.message.edit_text(
+        format_support_tickets(visible_tickets, title),
+        reply_markup=admin_support_list_keyboard(
+            visible_tickets,
+            scope=scope,
+            page=page,
+            has_next=has_next,
+        ),
+    )
+
+
 @router.callback_query(F.data == ADMIN_SUPPORT)
 async def admin_support_menu(callback: CallbackQuery, settings: Settings) -> None:
     if not await require_admin_callback(callback, settings):
         return
 
-    await callback.answer()
-    await callback.message.edit_text(
-        ADMIN_SUPPORT_TEXT,
-        reply_markup=admin_support_menu_keyboard(),
-    )
+    await answer_callback(callback)
+    await _show_admin_support_page(callback, "open", 0)
 
 
 @router.callback_query(F.data.startswith("admin:support:list:"))
@@ -140,16 +172,9 @@ async def admin_support_list(callback: CallbackQuery, settings: Settings) -> Non
     if not await require_admin_callback(callback, settings):
         return
 
-    status, title = ADMIN_SUPPORT_LISTS.get(
-        callback.data,
-        (None, "📋 Все обращения"),
-    )
-    tickets = SupportTicketRepository().list_tickets(status=status, limit=10)
-    await callback.answer()
-    await callback.message.edit_text(
-        format_support_tickets(tickets, title),
-        reply_markup=admin_support_list_keyboard(tickets),
-    )
+    await answer_callback(callback)
+    scope, page = _support_list_location(callback.data)
+    await _show_admin_support_page(callback, scope, page)
 
 
 @router.callback_query(F.data.startswith("support:admin:view:"))
@@ -374,9 +399,5 @@ async def close_support_ticket(callback: CallbackQuery, settings: Settings) -> N
         return
 
     logger.info("Обращение №%s закрыто", ticket.id)
-
-    await callback.message.edit_text(
-        f"✅ Обращение #{ticket.id} закрыто.",
-        reply_markup=None,
-    )
-    await callback.answer()
+    await callback.answer(f"Обращение #{ticket.id} закрыто.")
+    await _show_admin_support_page(callback, "open", 0)

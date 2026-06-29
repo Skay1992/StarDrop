@@ -36,8 +36,29 @@ def init_db(db_path: Path = DEFAULT_DB_PATH) -> None:
                 user_id INTEGER NOT NULL,
                 username TEXT,
                 message TEXT NOT NULL,
+                related_order_id INTEGER,
                 status TEXT NOT NULL,
-                created_at TEXT NOT NULL
+                admin_reply TEXT,
+                created_at TEXT NOT NULL,
+                answered_at TEXT
             )
             """
         )
+        _ensure_support_ticket_columns(connection)
+
+
+def _ensure_support_ticket_columns(connection: sqlite3.Connection) -> None:
+    existing = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(support_tickets)").fetchall()
+    }
+    columns = {
+        "related_order_id": "INTEGER",
+        "admin_reply": "TEXT",
+        "answered_at": "TEXT",
+    }
+    for name, column_type in columns.items():
+        if name not in existing:
+            connection.execute(
+                f"ALTER TABLE support_tickets ADD COLUMN {name} {column_type}"
+            )

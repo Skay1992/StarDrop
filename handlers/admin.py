@@ -35,7 +35,7 @@ from keyboards.orders import order_cancelled_keyboard, order_completed_keyboard
 
 router = Router()
 
-ADMIN_PANEL_TEXT = "🛠 Админ-панель StarDrop\n\nВыберите список заказов."
+ADMIN_PANEL_TEXT = "🛠 Админ-панель StarDrop\n\nВыберите раздел."
 ACCESS_DENIED_TEXT = "⛔ Доступ запрещен."
 ADMIN_LISTS = {
     ADMIN_LIST_PENDING: (STATUS_PENDING_REVIEW, "🟠 Заказы на проверке"),

@@ -111,7 +111,7 @@ def test_admin_command_shows_owner_panel():
     asyncio.run(admin_command(message, settings))
 
     sent = message.answers[0]
-    assert sent["text"] == "🛠 Админ-панель StarDrop\n\nВыберите список заказов."
+    assert sent["text"] == "🛠 Админ-панель StarDrop\n\nВыберите раздел."
     assert sent["reply_markup"].inline_keyboard[0][0].callback_data == "admin:list:pending_review"
 
 

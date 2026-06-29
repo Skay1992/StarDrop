@@ -9,6 +9,7 @@ from keyboards.main import home_menu_keyboard, main_menu_keyboard
 from keyboards.orders import order_cancelled_keyboard, order_completed_keyboard, payment_keyboard
 from keyboards.premium import premium_keyboard
 from keyboards.stars import stars_keyboard
+from keyboards.support import admin_support_menu_keyboard
 
 
 def test_main_menu_callback_data():
@@ -73,7 +74,20 @@ def test_admin_panel_keyboard_contains_order_filters_and_main_menu():
         ("🟢 Выполненные", "admin:list:completed"),
         ("🔴 Отмененные", "admin:list:cancelled"),
         ("📦 Все заказы", "admin:list:all"),
+        ("💬 Поддержка", "admin:support"),
         ("🏠 Главное меню", MAIN_MENU),
+    ]
+
+
+def test_admin_support_menu_contains_status_filters():
+    keyboard = admin_support_menu_keyboard()
+
+    assert [(row[0].text, row[0].callback_data) for row in keyboard.inline_keyboard] == [
+        ("🟢 Открытые", "admin:support:list:open"),
+        ("✅ Отвеченные", "admin:support:list:answered"),
+        ("🔒 Закрытые", "admin:support:list:closed"),
+        ("📋 Все обращения", "admin:support:list:all"),
+        ("↩️ Админ меню", "admin:menu"),
     ]
 
 

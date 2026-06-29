@@ -7,6 +7,7 @@ from keyboards.callbacks import (
     ADMIN_LIST_COMPLETED,
     ADMIN_LIST_PENDING,
     ADMIN_MENU,
+    ADMIN_SUPPORT,
     MAIN_MENU,
 )
 
@@ -18,6 +19,7 @@ def admin_panel_keyboard() -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text="🟢 Выполненные", callback_data=ADMIN_LIST_COMPLETED)],
             [InlineKeyboardButton(text="🔴 Отмененные", callback_data=ADMIN_LIST_CANCELLED)],
             [InlineKeyboardButton(text="📦 Все заказы", callback_data=ADMIN_LIST_ALL)],
+            [InlineKeyboardButton(text="💬 Поддержка", callback_data=ADMIN_SUPPORT)],
             [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
         ]
     )

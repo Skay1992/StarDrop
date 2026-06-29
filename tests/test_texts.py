@@ -291,8 +291,9 @@ def test_completed_premium_message_mentions_duration_and_recipient():
 def test_support_text_is_friendly_and_russian():
     assert SUPPORT_TEXT == (
         "💬 Поддержка StarDrop\n\n"
-        "Напишите ваш вопрос одним сообщением.\n"
-        "Мы ответим как можно быстрее."
+        "Опишите вопрос одним сообщением.\n"
+        "Мы ответим прямо в этом чате.\n\n"
+        "⏱ Обычно отвечаем в течение 5–15 минут."
     )
 
 

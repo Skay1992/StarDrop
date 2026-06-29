@@ -82,8 +82,9 @@ def test_support_callback_answers_and_opens_support(monkeypatch):
     assert callback.answers
     assert callback.message.edits[0]["text"] == (
         "💬 Поддержка StarDrop\n\n"
-        "Напишите ваш вопрос одним сообщением.\n"
-        "Мы ответим как можно быстрее."
+        "Опишите вопрос одним сообщением.\n"
+        "Мы ответим прямо в этом чате.\n\n"
+        "⏱ Обычно отвечаем в течение 5–15 минут."
     )
     assert callback.message.edits[0]["text"] == SUPPORT_TEXT
     assert callback.message.edits[0]["reply_markup"] is not None

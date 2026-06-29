@@ -155,6 +155,24 @@ class SupportTicketRepository:
 
         return [_ticket_from_row(row) for row in rows]
 
+    def list_user_tickets(
+        self,
+        user_id: int,
+        limit: int = 15,
+    ) -> List[SupportTicket]:
+        with get_connection(self.db_path) as connection:
+            rows = connection.execute(
+                """
+                SELECT * FROM support_tickets
+                WHERE user_id = ?
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (user_id, limit),
+            ).fetchall()
+
+        return [_ticket_from_row(row) for row in rows]
+
 
 def _insert_ticket(
     connection,

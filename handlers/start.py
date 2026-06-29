@@ -1,9 +1,13 @@
+from typing import Optional
+
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
+from aiogram.filters.command import CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
 from config.settings import Settings
+from database.users import UserRepository
 from handlers.callbacks import answer_callback, log_callback
 from keyboards.callbacks import LEGACY_MAIN_MENU, MAIN_MENU
 from keyboards.main import main_menu_keyboard
@@ -25,8 +29,19 @@ MAIN_MENU_TEXT = (
 
 
 @router.message(CommandStart())
-async def start_command(message: Message, state: FSMContext, settings: Settings) -> None:
+async def start_command(
+    message: Message,
+    state: FSMContext,
+    settings: Settings,
+    command: Optional[CommandObject] = None,
+) -> None:
     await state.clear()
+    referral_code = command.args.strip() if command and command.args else None
+    UserRepository().register_user(
+        user_id=message.from_user.id,
+        username=message.from_user.username,
+        invited_by_code=referral_code,
+    )
     await message.answer(MAIN_MENU_TEXT, reply_markup=main_menu_keyboard(settings.reviews_url))
 
 

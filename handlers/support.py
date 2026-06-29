@@ -179,7 +179,10 @@ async def admin_view_ticket(callback: CallbackQuery, settings: Settings) -> None
             heading=f"💬 Обращение #{ticket.id}",
             include_status=True,
         ),
-        reply_markup=support_ticket_admin_keyboard(ticket.id),
+        reply_markup=support_ticket_admin_keyboard(
+            ticket.id,
+            include_navigation=True,
+        ),
     )
 
 

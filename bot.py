@@ -6,7 +6,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from config.settings import load_settings
 from database.db import init_db
-from handlers import admin, diagnostics, orders, premium, stars, start, support
+from handlers import admin, cabinet, diagnostics, orders, premium, stars, start, support
 
 
 async def main() -> None:
@@ -21,6 +21,7 @@ async def main() -> None:
     dp.include_router(stars.router)
     dp.include_router(premium.router)
     dp.include_router(orders.router)
+    dp.include_router(cabinet.router)
     dp.include_router(support.router)
     dp.include_router(admin.router)
     dp.include_router(diagnostics.router)

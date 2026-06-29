@@ -45,6 +45,21 @@ def init_db(db_path: Path = DEFAULT_DB_PATH) -> None:
             """
         )
         _ensure_support_ticket_columns(connection)
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                user_id INTEGER PRIMARY KEY,
+                username TEXT,
+                registered_at TEXT NOT NULL,
+                orders_count INTEGER NOT NULL DEFAULT 0,
+                stars_bought INTEGER NOT NULL DEFAULT 0,
+                premium_months INTEGER NOT NULL DEFAULT 0,
+                referral_code TEXT NOT NULL UNIQUE,
+                invited_by INTEGER,
+                referrals_count INTEGER NOT NULL DEFAULT 0
+            )
+            """
+        )
 
 
 def _ensure_support_ticket_columns(connection: sqlite3.Connection) -> None:

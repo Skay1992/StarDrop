@@ -377,6 +377,7 @@ def test_admin_can_open_support_section():
         "🔒 Закрытые",
         "📋 Все обращения",
         "↩️ Админ меню",
+        "🏠 Главное меню",
     ]
 
 
@@ -392,7 +393,8 @@ def test_admin_can_filter_and_open_support_tickets(monkeypatch):
     assert edit["text"].startswith("🟢 Открытые обращения")
     assert "#7 — @client" in edit["text"]
     assert edit["reply_markup"].inline_keyboard[0][0].callback_data == "support:admin:view:7"
-    assert edit["reply_markup"].inline_keyboard[-1][0].text == "↩️ К поддержке"
+    assert edit["reply_markup"].inline_keyboard[-2][0].text == "↩️ К поддержке"
+    assert edit["reply_markup"].inline_keyboard[-1][0].text == "🏠 Главное меню"
 
 
 def test_admin_can_open_support_ticket_card(monkeypatch):

@@ -128,3 +128,14 @@ def test_support_ticket_list_can_filter_by_status(tmp_path):
     assert [ticket.id for ticket in open_tickets] == [open_ticket.id]
     assert [ticket.id for ticket in answered_tickets] == [answered_ticket.id]
     assert [ticket.id for ticket in closed_tickets] == [closed_ticket.id]
+
+
+def test_user_ticket_history_contains_only_own_latest_tickets(tmp_path):
+    repository = SupportTicketRepository(tmp_path / "support.sqlite3")
+    first = repository.create_ticket(123, "client", "Первое")
+    repository.create_ticket(999, "other", "Чужое")
+    latest = repository.create_ticket(123, "client", "Последнее")
+
+    tickets = repository.list_user_tickets(123, limit=15)
+
+    assert [ticket.id for ticket in tickets] == [latest.id, first.id]

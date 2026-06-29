@@ -7,7 +7,12 @@ from keyboards.callbacks import (
     ADMIN_LIST_COMPLETED,
     ADMIN_LIST_PENDING,
     ADMIN_MENU,
+    ADMIN_ORDERS,
+    ADMIN_PROMOCODES,
+    ADMIN_SETTINGS,
+    ADMIN_STATISTICS,
     ADMIN_SUPPORT,
+    ADMIN_USERS,
     MAIN_MENU,
 )
 
@@ -15,11 +20,54 @@ from keyboards.callbacks import (
 def admin_panel_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="🟠 Проверяем оплату", callback_data=ADMIN_LIST_PENDING)],
-            [InlineKeyboardButton(text="🟢 Выполненные", callback_data=ADMIN_LIST_COMPLETED)],
-            [InlineKeyboardButton(text="🔴 Отмененные", callback_data=ADMIN_LIST_CANCELLED)],
-            [InlineKeyboardButton(text="📦 Все заказы", callback_data=ADMIN_LIST_ALL)],
+            [InlineKeyboardButton(text="📦 Заказы", callback_data=ADMIN_ORDERS)],
             [InlineKeyboardButton(text="💬 Поддержка", callback_data=ADMIN_SUPPORT)],
+            [InlineKeyboardButton(text="👥 Пользователи", callback_data=ADMIN_USERS)],
+            [
+                InlineKeyboardButton(
+                    text="📈 Статистика",
+                    callback_data=ADMIN_STATISTICS,
+                )
+            ],
+            [InlineKeyboardButton(text="🎟 Промокоды", callback_data=ADMIN_PROMOCODES)],
+            [InlineKeyboardButton(text="⚙ Настройки", callback_data=ADMIN_SETTINGS)],
+            [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
+        ]
+    )
+
+
+def admin_orders_menu_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="🟠 Проверяем оплату",
+                    callback_data=ADMIN_LIST_PENDING,
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="🟢 Выполненные",
+                    callback_data=ADMIN_LIST_COMPLETED,
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="🔴 Отмененные",
+                    callback_data=ADMIN_LIST_CANCELLED,
+                )
+            ],
+            [InlineKeyboardButton(text="📦 Все заказы", callback_data=ADMIN_LIST_ALL)],
+            [InlineKeyboardButton(text="↩️ Админ меню", callback_data=ADMIN_MENU)],
+            [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
+        ]
+    )
+
+
+def admin_back_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="↩️ Админ меню", callback_data=ADMIN_MENU)],
             [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
         ]
     )
@@ -43,7 +91,10 @@ def admin_orders_list_keyboard(orders: list[Order]) -> InlineKeyboardMarkup:
             ]
         )
 
-    rows.append([InlineKeyboardButton(text="↩️ Админ меню", callback_data=ADMIN_MENU)])
+    rows.append([InlineKeyboardButton(text="↩️ К заказам", callback_data=ADMIN_ORDERS)])
+    rows.append(
+        [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)]
+    )
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 

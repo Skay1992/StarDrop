@@ -1,10 +1,11 @@
 from database.orders import Order, PRODUCT_STARS, STATUS_COMPLETED, STATUS_PENDING_REVIEW
 from keyboards.admin import (
     admin_complete_confirmation_keyboard,
+    admin_orders_menu_keyboard,
     admin_orders_list_keyboard,
     admin_panel_keyboard,
 )
-from keyboards.callbacks import BUY_PREMIUM, BUY_STARS, MAIN_MENU, MY_ORDERS, SUPPORT
+from keyboards.callbacks import BUY_PREMIUM, BUY_STARS, CABINET, MAIN_MENU, MY_ORDERS, SUPPORT
 from keyboards.main import home_menu_keyboard, main_menu_keyboard
 from keyboards.orders import order_cancelled_keyboard, order_completed_keyboard, payment_keyboard
 from keyboards.premium import premium_keyboard
@@ -20,7 +21,7 @@ def test_main_menu_callback_data():
         ("⭐ Купить Stars", BUY_STARS, None),
         ("💎 Telegram Premium", BUY_PREMIUM, None),
         ("⭐ Отзывы", None, "https://t.me/stardrop_reviews"),
-        ("📦 Мои заказы", MY_ORDERS, None),
+        ("👤 Личный кабинет", CABINET, None),
         ("💬 Поддержка", SUPPORT, None),
     ]
 
@@ -70,11 +71,12 @@ def test_admin_panel_keyboard_contains_order_filters_and_main_menu():
     keyboard = admin_panel_keyboard()
 
     assert [(row[0].text, row[0].callback_data) for row in keyboard.inline_keyboard] == [
-        ("🟠 Проверяем оплату", "admin:list:pending_review"),
-        ("🟢 Выполненные", "admin:list:completed"),
-        ("🔴 Отмененные", "admin:list:cancelled"),
-        ("📦 Все заказы", "admin:list:all"),
+        ("📦 Заказы", "admin:orders"),
         ("💬 Поддержка", "admin:support"),
+        ("👥 Пользователи", "admin:users"),
+        ("📈 Статистика", "admin:statistics"),
+        ("🎟 Промокоды", "admin:promocodes"),
+        ("⚙ Настройки", "admin:settings"),
         ("🏠 Главное меню", MAIN_MENU),
     ]
 
@@ -88,6 +90,20 @@ def test_admin_support_menu_contains_status_filters():
         ("🔒 Закрытые", "admin:support:list:closed"),
         ("📋 Все обращения", "admin:support:list:all"),
         ("↩️ Админ меню", "admin:menu"),
+        ("🏠 Главное меню", MAIN_MENU),
+    ]
+
+
+def test_admin_orders_menu_preserves_existing_filters():
+    keyboard = admin_orders_menu_keyboard()
+
+    assert [(row[0].text, row[0].callback_data) for row in keyboard.inline_keyboard] == [
+        ("🟠 Проверяем оплату", "admin:list:pending_review"),
+        ("🟢 Выполненные", "admin:list:completed"),
+        ("🔴 Отмененные", "admin:list:cancelled"),
+        ("📦 Все заказы", "admin:list:all"),
+        ("↩️ Админ меню", "admin:menu"),
+        ("🏠 Главное меню", MAIN_MENU),
     ]
 
 
@@ -123,8 +139,10 @@ def test_admin_orders_list_keyboard_shows_actions_only_for_pending_orders():
     assert keyboard.inline_keyboard[0][0].callback_data == "admin:complete:7"
     assert keyboard.inline_keyboard[0][1].text == "❌ #7"
     assert keyboard.inline_keyboard[0][1].callback_data == "admin:cancel:7"
-    assert keyboard.inline_keyboard[1][0].text == "↩️ Админ меню"
-    assert keyboard.inline_keyboard[1][0].callback_data == "admin:menu"
+    assert keyboard.inline_keyboard[1][0].text == "↩️ К заказам"
+    assert keyboard.inline_keyboard[1][0].callback_data == "admin:orders"
+    assert keyboard.inline_keyboard[2][0].text == "🏠 Главное меню"
+    assert keyboard.inline_keyboard[2][0].callback_data == MAIN_MENU
 
 
 def test_payment_keyboard_contains_paid_cancel_and_back_to_menu():

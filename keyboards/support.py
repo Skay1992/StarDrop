@@ -17,10 +17,26 @@ def admin_support_menu_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="🟢 Открытые", callback_data=ADMIN_SUPPORT_OPEN)],
-            [InlineKeyboardButton(text="✅ Отвеченные", callback_data=ADMIN_SUPPORT_ANSWERED)],
-            [InlineKeyboardButton(text="🔒 Закрытые", callback_data=ADMIN_SUPPORT_CLOSED)],
-            [InlineKeyboardButton(text="📋 Все обращения", callback_data=ADMIN_SUPPORT_ALL)],
+            [
+                InlineKeyboardButton(
+                    text="✅ Отвеченные",
+                    callback_data=ADMIN_SUPPORT_ANSWERED,
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="🔒 Закрытые",
+                    callback_data=ADMIN_SUPPORT_CLOSED,
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="📋 Все обращения",
+                    callback_data=ADMIN_SUPPORT_ALL,
+                )
+            ],
             [InlineKeyboardButton(text="↩️ Админ меню", callback_data=ADMIN_MENU)],
+            [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
         ]
     )
 
@@ -38,30 +54,52 @@ def admin_support_list_keyboard(tickets: list[SupportTicket]) -> InlineKeyboardM
     rows.append(
         [InlineKeyboardButton(text="↩️ К поддержке", callback_data=ADMIN_SUPPORT)]
     )
+    rows.append(
+        [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)]
+    )
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def support_ticket_admin_keyboard(ticket_id: int) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
+def support_ticket_admin_keyboard(
+    ticket_id: int,
+    include_navigation: bool = False,
+) -> InlineKeyboardMarkup:
+    rows = [
+        [
+            InlineKeyboardButton(
+                text="✉️ Ответить",
+                callback_data=f"support:reply:{ticket_id}",
+            ),
+            InlineKeyboardButton(
+                text="📦 Открыть заказ",
+                callback_data=f"support:order:{ticket_id}",
+            ),
+        ],
+        [
+            InlineKeyboardButton(
+                text="✅ Закрыть",
+                callback_data=f"support:close:{ticket_id}",
+            )
+        ],
+    ]
+    if include_navigation:
+        rows.extend(
             [
-                InlineKeyboardButton(
-                    text="✉️ Ответить",
-                    callback_data=f"support:reply:{ticket_id}",
-                ),
-                InlineKeyboardButton(
-                    text="📦 Открыть заказ",
-                    callback_data=f"support:order:{ticket_id}",
-                ),
-            ],
-            [
-                InlineKeyboardButton(
-                    text="✅ Закрыть",
-                    callback_data=f"support:close:{ticket_id}",
-                )
-            ],
-        ]
-    )
+                [
+                    InlineKeyboardButton(
+                        text="↩️ К поддержке",
+                        callback_data=ADMIN_SUPPORT,
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="🏠 Главное меню",
+                        callback_data=MAIN_MENU,
+                    )
+                ],
+            ]
+        )
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def support_answer_keyboard() -> InlineKeyboardMarkup:
@@ -95,6 +133,7 @@ def support_order_back_keyboard(ticket_id: int) -> InlineKeyboardMarkup:
                     text="↩️ К обращению",
                     callback_data=f"support:admin:view:{ticket_id}",
                 )
-            ]
+            ],
+            [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
         ]
     )

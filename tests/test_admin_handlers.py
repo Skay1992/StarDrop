@@ -8,7 +8,13 @@ from database.orders import (
     STATUS_COMPLETED,
     STATUS_PENDING_REVIEW,
 )
-from handlers.admin import admin_cancel_order, admin_command, admin_confirm_complete_order, admin_list_orders
+from handlers.admin import (
+    admin_cancel_order,
+    admin_command,
+    admin_complete_order,
+    admin_confirm_complete_order,
+    admin_list_orders,
+)
 
 
 def make_order(status):
@@ -89,6 +95,15 @@ class FakeListRepository:
         return [make_order(STATUS_PENDING_REVIEW)]
 
 
+class ConfirmationOnlyRepository:
+    def get_order(self, order_id):
+        assert order_id == 7
+        return make_order(STATUS_PENDING_REVIEW)
+
+    def update_status(self, order_id, status):
+        raise AssertionError("Статус нельзя менять до подтверждения")
+
+
 def test_admin_command_shows_owner_panel():
     message = FakeCommandMessage(user_id=999)
     settings = SimpleNamespace(admin_id=999)
@@ -106,7 +121,7 @@ def test_admin_command_denies_non_admin_user():
 
     asyncio.run(admin_command(message, settings))
 
-    assert message.answers[0]["text"] == "Недоступно."
+    assert message.answers[0]["text"] == "⛔ Доступ запрещен."
 
 
 def test_admin_pending_orders_callback_shows_filtered_orders(monkeypatch):
@@ -123,6 +138,19 @@ def test_admin_pending_orders_callback_shows_filtered_orders(monkeypatch):
     assert callback.answers[0]["text"] is None
 
 
+def test_admin_complete_button_only_opens_confirmation(monkeypatch):
+    monkeypatch.setattr("handlers.admin.OrderRepository", ConfirmationOnlyRepository)
+    callback = FakeCallback("admin:complete:7")
+    settings = SimpleNamespace(admin_id=999)
+
+    asyncio.run(admin_complete_order(callback, settings))
+
+    edit = callback.message.edits[0]
+    assert edit["text"] == "Подтвердить выполнение заказа №7?"
+    assert edit["reply_markup"].inline_keyboard[0][0].callback_data == "admin:confirm_complete:7"
+    assert edit["reply_markup"].inline_keyboard[0][1].text == "↩️ Назад"
+
+
 def test_admin_completed_order_message_has_main_menu_and_orders(monkeypatch):
     monkeypatch.setattr("handlers.admin.OrderRepository", FakeRepository)
     callback = FakeCallback("admin:confirm_complete:7")
@@ -135,8 +163,8 @@ def test_admin_completed_order_message_has_main_menu_and_orders(monkeypatch):
 
     assert sent["chat_id"] == 123
     assert sent["text"].startswith("✅ Заказ выполнен")
-    assert buttons[0][0].text == "🏠 Главное меню"
-    assert buttons[1][0].text == "📦 Мои заказы"
+    assert buttons[0][0].text == "📦 Мои заказы"
+    assert buttons[1][0].text == "🏠 Главное меню"
     assert callback.answers[-1]["text"] == "Готово."
 
 
@@ -151,7 +179,10 @@ def test_admin_cancelled_order_message_has_main_menu_and_support(monkeypatch):
     buttons = sent["reply_markup"].inline_keyboard
 
     assert sent["chat_id"] == 123
-    assert sent["text"] == "Заказ отменен.\nОбратитесь в поддержку."
-    assert buttons[0][0].text == "🏠 Главное меню"
-    assert buttons[1][0].text == "💬 Поддержка"
+    assert sent["text"] == (
+        "❌ Заказ отменен\n\n"
+        "Если вы оплатили заказ случайно, напишите в поддержку."
+    )
+    assert buttons[0][0].text == "💬 Поддержка"
+    assert buttons[1][0].text == "🏠 Главное меню"
     assert callback.answers[-1]["text"] == "Отменено."

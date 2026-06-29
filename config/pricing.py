@@ -32,7 +32,7 @@ def get_premium_price(months: int) -> int:
     try:
         return PREMIUM_PRICES[months]
     except KeyError as exc:
-        raise ValueError("Premium duration must be 1, 3, 6, or 12 months") from exc
+        raise ValueError("Срок Premium должен быть 1, 3, 6 или 12 месяцев") from exc
 
 
 def premium_duration_label(months: int) -> str:

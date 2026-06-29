@@ -9,11 +9,16 @@ from database.orders import (
     STATUS_PENDING_REVIEW,
 )
 from handlers.callbacks import answer_callback, log_callback
-from handlers.formatters import format_admin_order, format_order_summary, format_orders_list
+from handlers.formatters import (
+    format_admin_order,
+    format_cancelled_message,
+    format_orders_list,
+    format_payment_review_message,
+)
 from keyboards.admin import admin_order_keyboard
 from keyboards.callbacks import LEGACY_MY_ORDERS, MY_ORDERS
 from keyboards.main import home_menu_keyboard
-from keyboards.orders import order_cancelled_keyboard
+from keyboards.orders import order_cancelled_keyboard, order_completed_keyboard
 
 
 router = Router()
@@ -42,7 +47,10 @@ async def order_paid(callback: CallbackQuery, settings: Settings) -> None:
         return
 
     order = repository.update_status(order_id, STATUS_PENDING_REVIEW)
-    await callback.message.edit_text(format_order_summary(order), reply_markup=home_menu_keyboard())
+    await callback.message.edit_text(
+        format_payment_review_message(order),
+        reply_markup=order_completed_keyboard(),
+    )
     await callback.bot.send_message(
         chat_id=settings.admin_id,
         text=format_admin_order(order),
@@ -65,5 +73,8 @@ async def order_cancel(callback: CallbackQuery) -> None:
         return
 
     repository.update_status(order_id, STATUS_CANCELLED)
-    await callback.message.edit_text("Заказ отменен.", reply_markup=order_cancelled_keyboard())
+    await callback.message.edit_text(
+        format_cancelled_message(),
+        reply_markup=order_cancelled_keyboard(),
+    )
     await callback.answer()

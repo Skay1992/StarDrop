@@ -8,6 +8,7 @@ from database.orders import OrderRepository, PRODUCT_STARS
 from handlers.callbacks import answer_callback, log_callback
 from handlers.formatters import format_order_summary
 from handlers.states import StarsOrderState
+from handlers.texts import CUSTOM_STARS_PROMPT, RECIPIENT_PROMPT, USERNAME_ERROR
 from handlers.validators import is_valid_telegram_username
 from keyboards.callbacks import BUY_STARS, LEGACY_BUY_STARS
 from keyboards.main import back_to_menu_keyboard
@@ -37,7 +38,7 @@ async def stars_amount_selected(callback: CallbackQuery, state: FSMContext) -> N
     await state.update_data(stars_amount=amount, price_rub=price_rub)
     await state.set_state(StarsOrderState.telegram_username)
     await callback.message.edit_text(
-        "Введите username получателя:\n@username",
+        RECIPIENT_PROMPT,
         reply_markup=back_to_menu_keyboard(),
     )
 
@@ -47,7 +48,7 @@ async def stars_custom_amount(callback: CallbackQuery, state: FSMContext) -> Non
     await callback.answer()
     await state.set_state(StarsOrderState.custom_amount)
     await callback.message.edit_text(
-        f"Введите количество звезд:\nот {MIN_CUSTOM_STARS} до {MAX_CUSTOM_STARS}",
+        CUSTOM_STARS_PROMPT,
         reply_markup=back_to_menu_keyboard(),
     )
 
@@ -56,24 +57,38 @@ async def stars_custom_amount(callback: CallbackQuery, state: FSMContext) -> Non
 async def stars_custom_amount_entered(message: Message, state: FSMContext) -> None:
     try:
         amount = int(message.text.strip())
-        price_rub = get_stars_price(amount)
     except (AttributeError, ValueError):
         await message.answer(
-            f"Введите число от {MIN_CUSTOM_STARS} до {MAX_CUSTOM_STARS}.",
+            "Введите количество цифрами.",
             reply_markup=back_to_menu_keyboard(),
         )
         return
 
+    if amount < MIN_CUSTOM_STARS:
+        await message.answer(
+            f"Минимальное количество — {MIN_CUSTOM_STARS} Stars.",
+            reply_markup=back_to_menu_keyboard(),
+        )
+        return
+    if amount > MAX_CUSTOM_STARS:
+        await message.answer(
+            f"Максимальное количество — {MAX_CUSTOM_STARS} Stars.",
+            reply_markup=back_to_menu_keyboard(),
+        )
+        return
+
+    price_rub = get_stars_price(amount)
+
     await state.update_data(stars_amount=amount, price_rub=price_rub)
     await state.set_state(StarsOrderState.telegram_username)
-    await message.answer("Введите username получателя:\n@username", reply_markup=back_to_menu_keyboard())
+    await message.answer(RECIPIENT_PROMPT, reply_markup=back_to_menu_keyboard())
 
 
 @router.message(StarsOrderState.telegram_username)
 async def stars_username_entered(message: Message, state: FSMContext, settings: Settings) -> None:
     telegram_username = message.text.strip() if message.text else ""
     if not is_valid_telegram_username(telegram_username):
-        await message.answer("Username должен начинаться с @.", reply_markup=back_to_menu_keyboard())
+        await message.answer(USERNAME_ERROR, reply_markup=back_to_menu_keyboard())
         return
 
     data = await state.get_data()

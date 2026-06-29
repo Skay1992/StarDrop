@@ -14,6 +14,7 @@ from handlers.formatters import (
     format_admin_completion_confirmation,
     format_admin_order,
     format_admin_orders_list,
+    format_cancelled_message,
     format_completed_message,
 )
 from keyboards.admin import (
@@ -35,6 +36,7 @@ from keyboards.orders import order_cancelled_keyboard, order_completed_keyboard
 router = Router()
 
 ADMIN_PANEL_TEXT = "🛠 Админ-панель StarDrop\n\nВыберите список заказов."
+ACCESS_DENIED_TEXT = "⛔ Доступ запрещен."
 ADMIN_LISTS = {
     ADMIN_LIST_PENDING: (STATUS_PENDING_REVIEW, "🟠 Заказы на проверке"),
     ADMIN_LIST_COMPLETED: (STATUS_COMPLETED, "🟢 Выполненные заказы"),
@@ -50,7 +52,7 @@ def _is_admin(user_id: int, settings: Settings) -> bool:
 @router.message(Command("admin"))
 async def admin_command(message: Message, settings: Settings) -> None:
     if not _is_admin(message.from_user.id, settings):
-        await message.answer("Недоступно.")
+        await message.answer(ACCESS_DENIED_TEXT)
         return
 
     await message.answer(ADMIN_PANEL_TEXT, reply_markup=admin_panel_keyboard())
@@ -59,7 +61,7 @@ async def admin_command(message: Message, settings: Settings) -> None:
 @router.callback_query(F.data == ADMIN_MENU)
 async def admin_menu(callback: CallbackQuery, settings: Settings) -> None:
     if not _is_admin(callback.from_user.id, settings):
-        await callback.answer("Недоступно.", show_alert=True)
+        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
         return
 
     await answer_callback(callback)
@@ -70,7 +72,7 @@ async def admin_menu(callback: CallbackQuery, settings: Settings) -> None:
 @router.callback_query(F.data.startswith("admin:list:"))
 async def admin_list_orders(callback: CallbackQuery, settings: Settings) -> None:
     if not _is_admin(callback.from_user.id, settings):
-        await callback.answer("Недоступно.", show_alert=True)
+        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
         return
 
     await answer_callback(callback)
@@ -87,7 +89,7 @@ async def admin_list_orders(callback: CallbackQuery, settings: Settings) -> None
 @router.callback_query(F.data.startswith("admin:complete:"))
 async def admin_complete_order(callback: CallbackQuery, settings: Settings) -> None:
     if callback.from_user.id != settings.admin_id:
-        await callback.answer("Недоступно.", show_alert=True)
+        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
         return
 
     order_id = int(callback.data.split(":")[-1])
@@ -107,7 +109,7 @@ async def admin_complete_order(callback: CallbackQuery, settings: Settings) -> N
 @router.callback_query(F.data.startswith("admin:back:"))
 async def admin_back_to_order(callback: CallbackQuery, settings: Settings) -> None:
     if callback.from_user.id != settings.admin_id:
-        await callback.answer("Недоступно.", show_alert=True)
+        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
         return
 
     order_id = int(callback.data.split(":")[-1])
@@ -124,7 +126,7 @@ async def admin_back_to_order(callback: CallbackQuery, settings: Settings) -> No
 @router.callback_query(F.data.startswith("admin:confirm_complete:"))
 async def admin_confirm_complete_order(callback: CallbackQuery, settings: Settings) -> None:
     if callback.from_user.id != settings.admin_id:
-        await callback.answer("Недоступно.", show_alert=True)
+        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
         return
 
     order_id = int(callback.data.split(":")[-1])
@@ -146,7 +148,7 @@ async def admin_confirm_complete_order(callback: CallbackQuery, settings: Settin
 @router.callback_query(F.data.startswith("admin:cancel:"))
 async def admin_cancel_order(callback: CallbackQuery, settings: Settings) -> None:
     if callback.from_user.id != settings.admin_id:
-        await callback.answer("Недоступно.", show_alert=True)
+        await callback.answer(ACCESS_DENIED_TEXT, show_alert=True)
         return
 
     order_id = int(callback.data.split(":")[-1])
@@ -158,7 +160,7 @@ async def admin_cancel_order(callback: CallbackQuery, settings: Settings) -> Non
 
     await callback.bot.send_message(
         order.user_id,
-        "Заказ отменен.\nОбратитесь в поддержку.",
+        format_cancelled_message(),
         reply_markup=order_cancelled_keyboard(),
     )
     await callback.message.edit_text(format_admin_order(order))

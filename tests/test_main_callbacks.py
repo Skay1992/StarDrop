@@ -85,5 +85,5 @@ def test_my_orders_callback_answers_and_opens_orders(monkeypatch):
     asyncio.run(list_orders(callback))
 
     assert callback.answers
-    assert callback.message.edits[0]["text"] == "У вас пока нет заказов."
+    assert callback.message.edits[0]["text"] == "📦 Мои заказы\n\nУ вас пока нет заказов."
     assert callback.message.edits[0]["reply_markup"] is not None

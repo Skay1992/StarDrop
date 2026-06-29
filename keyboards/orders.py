@@ -12,11 +12,11 @@ def payment_keyboard(order_id: int) -> InlineKeyboardMarkup:
                     callback_data=f"order:paid:{order_id}",
                 ),
                 InlineKeyboardButton(
-                    text="❌ Отмена",
+                    text="❌ Отменить",
                     callback_data=f"order:cancel:{order_id}",
                 ),
             ],
-            [InlineKeyboardButton(text="↩️ В меню", callback_data=MAIN_MENU)],
+            [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
         ]
     )
 
@@ -24,8 +24,8 @@ def payment_keyboard(order_id: int) -> InlineKeyboardMarkup:
 def order_completed_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
             [InlineKeyboardButton(text="📦 Мои заказы", callback_data=MY_ORDERS)],
+            [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
         ]
     )
 
@@ -33,7 +33,7 @@ def order_completed_keyboard() -> InlineKeyboardMarkup:
 def order_cancelled_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
             [InlineKeyboardButton(text="💬 Поддержка", callback_data=SUPPORT)],
+            [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
         ]
     )

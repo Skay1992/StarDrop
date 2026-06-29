@@ -48,6 +48,16 @@ def test_start_command_clears_fsm_state_and_shows_main_menu():
     asyncio.run(start_command(message, state, settings))
 
     assert state.cleared
+    assert message.answers[0]["text"] == (
+        "🚀 Добро пожаловать в StarDrop!\n\n"
+        "Здесь можно быстро приобрести:\n\n"
+        "⭐ Telegram Stars\n"
+        "💎 Telegram Premium\n\n"
+        "✔️ Быстро\n"
+        "✔️ Просто\n"
+        "✔️ Поддержка рядом\n\n"
+        "👇 Выберите нужный раздел."
+    )
     assert message.answers[0]["text"] == MAIN_MENU_TEXT
     assert message.answers[0]["reply_markup"] is not None
     assert message.answers[0]["reply_markup"].inline_keyboard[2][0].url == "https://t.me/stardrop_reviews"
@@ -83,5 +93,5 @@ def test_cancel_command_clears_fsm_state_and_shows_main_menu():
 def test_back_to_menu_button_text():
     keyboard = back_to_menu_keyboard()
 
-    assert keyboard.inline_keyboard[0][0].text == "↩️ В меню"
+    assert keyboard.inline_keyboard[0][0].text == "🏠 Главное меню"
     assert keyboard.inline_keyboard[0][0].callback_data == MAIN_MENU

@@ -8,6 +8,7 @@ from database.orders import OrderRepository, PRODUCT_PREMIUM
 from handlers.callbacks import answer_callback, log_callback
 from handlers.formatters import format_order_summary
 from handlers.states import PremiumOrderState
+from handlers.texts import RECIPIENT_PROMPT, USERNAME_ERROR
 from handlers.validators import is_valid_telegram_username
 from keyboards.callbacks import BUY_PREMIUM, LEGACY_BUY_PREMIUM
 from keyboards.main import back_to_menu_keyboard
@@ -34,7 +35,7 @@ async def premium_months_selected(callback: CallbackQuery, state: FSMContext) ->
     await state.update_data(premium_months=months, price_rub=price_rub)
     await state.set_state(PremiumOrderState.telegram_username)
     await callback.message.edit_text(
-        "Введите username получателя:\n@username",
+        RECIPIENT_PROMPT,
         reply_markup=back_to_menu_keyboard(),
     )
 
@@ -43,7 +44,7 @@ async def premium_months_selected(callback: CallbackQuery, state: FSMContext) ->
 async def premium_username_entered(message: Message, state: FSMContext, settings: Settings) -> None:
     telegram_username = message.text.strip() if message.text else ""
     if not is_valid_telegram_username(telegram_username):
-        await message.answer("Username должен начинаться с @.", reply_markup=back_to_menu_keyboard())
+        await message.answer(USERNAME_ERROR, reply_markup=back_to_menu_keyboard())
         return
 
     data = await state.get_data()

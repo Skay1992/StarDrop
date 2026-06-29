@@ -16,7 +16,7 @@ def test_main_menu_callback_data():
     buttons = [row[0] for row in keyboard.inline_keyboard]
 
     assert [(button.text, button.callback_data, button.url) for button in buttons] == [
-        ("⭐ Купить звезды", BUY_STARS, None),
+        ("⭐ Купить Stars", BUY_STARS, None),
         ("💎 Telegram Premium", BUY_PREMIUM, None),
         ("⭐ Отзывы", None, "https://t.me/stardrop_reviews"),
         ("📦 Мои заказы", MY_ORDERS, None),
@@ -24,19 +24,19 @@ def test_main_menu_callback_data():
     ]
 
 
-def test_stars_keyboard_contains_prices_custom_amount_and_back_button():
+def test_stars_keyboard_contains_amounts_custom_amount_and_home_button():
     keyboard = stars_keyboard()
     rows = keyboard.inline_keyboard
 
     assert [row[0].text for row in rows] == [
-        "50 · 65 ₽",
-        "100 · 130 ₽",
-        "250 · 325 ₽",
-        "500 · 650 ₽",
-        "1000 · 1300 ₽",
-        "2500 · 3250 ₽",
-        "Своё количество",
-        "↩️ В меню",
+        "50 ⭐",
+        "100 ⭐",
+        "250 ⭐",
+        "500 ⭐",
+        "1000 ⭐",
+        "2500 ⭐",
+        "✏️ Своё количество",
+        "🏠 Главное меню",
     ]
     assert rows[-1][0].callback_data == MAIN_MENU
 
@@ -46,11 +46,11 @@ def test_premium_keyboard_contains_durations_and_back_button():
     rows = keyboard.inline_keyboard
 
     assert [row[0].text for row in rows] == [
-        "1 месяц · 349 ₽",
-        "3 месяца · 990 ₽",
-        "6 месяцев · 1690 ₽",
-        "12 месяцев · 2990 ₽",
-        "↩️ В меню",
+        "1 месяц — 349 ₽",
+        "3 месяца — 990 ₽",
+        "6 месяцев — 1690 ₽",
+        "12 месяцев — 2990 ₽",
+        "🏠 Главное меню",
     ]
     assert rows[-1][0].callback_data == MAIN_MENU
 
@@ -61,7 +61,7 @@ def test_admin_complete_confirmation_keyboard():
 
     assert buttons[0].text == "✅ Да, выполнить"
     assert buttons[0].callback_data == "admin:confirm_complete:7"
-    assert buttons[1].text == "↩️ Нет, назад"
+    assert buttons[1].text == "↩️ Назад"
     assert buttons[1].callback_data == "admin:back:7"
 
 
@@ -118,9 +118,9 @@ def test_payment_keyboard_contains_paid_cancel_and_back_to_menu():
 
     assert keyboard.inline_keyboard[0][0].text == "✅ Я оплатил"
     assert keyboard.inline_keyboard[0][0].callback_data == "order:paid:7"
-    assert keyboard.inline_keyboard[0][1].text == "❌ Отмена"
+    assert keyboard.inline_keyboard[0][1].text == "❌ Отменить"
     assert keyboard.inline_keyboard[0][1].callback_data == "order:cancel:7"
-    assert keyboard.inline_keyboard[1][0].text == "↩️ В меню"
+    assert keyboard.inline_keyboard[1][0].text == "🏠 Главное меню"
     assert keyboard.inline_keyboard[1][0].callback_data == MAIN_MENU
 
 
@@ -134,16 +134,16 @@ def test_home_menu_keyboard_contains_main_menu_button():
 def test_order_completed_keyboard_contains_main_menu_and_orders():
     keyboard = order_completed_keyboard()
 
-    assert keyboard.inline_keyboard[0][0].text == "🏠 Главное меню"
-    assert keyboard.inline_keyboard[0][0].callback_data == MAIN_MENU
-    assert keyboard.inline_keyboard[1][0].text == "📦 Мои заказы"
-    assert keyboard.inline_keyboard[1][0].callback_data == MY_ORDERS
+    assert keyboard.inline_keyboard[0][0].text == "📦 Мои заказы"
+    assert keyboard.inline_keyboard[0][0].callback_data == MY_ORDERS
+    assert keyboard.inline_keyboard[1][0].text == "🏠 Главное меню"
+    assert keyboard.inline_keyboard[1][0].callback_data == MAIN_MENU
 
 
 def test_order_cancelled_keyboard_contains_main_menu_and_support():
     keyboard = order_cancelled_keyboard()
 
-    assert keyboard.inline_keyboard[0][0].text == "🏠 Главное меню"
-    assert keyboard.inline_keyboard[0][0].callback_data == MAIN_MENU
-    assert keyboard.inline_keyboard[1][0].text == "💬 Поддержка"
-    assert keyboard.inline_keyboard[1][0].callback_data == SUPPORT
+    assert keyboard.inline_keyboard[0][0].text == "💬 Поддержка"
+    assert keyboard.inline_keyboard[0][0].callback_data == SUPPORT
+    assert keyboard.inline_keyboard[1][0].text == "🏠 Главное меню"
+    assert keyboard.inline_keyboard[1][0].callback_data == MAIN_MENU

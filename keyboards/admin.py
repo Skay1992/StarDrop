@@ -71,7 +71,7 @@ def admin_complete_confirmation_keyboard(order_id: int) -> InlineKeyboardMarkup:
                     callback_data=f"admin:confirm_complete:{order_id}",
                 ),
                 InlineKeyboardButton(
-                    text="↩️ Нет, назад",
+                    text="↩️ Назад",
                     callback_data=f"admin:back:{order_id}",
                 ),
             ]

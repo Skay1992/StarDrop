@@ -8,12 +8,12 @@ def stars_keyboard() -> InlineKeyboardMarkup:
     rows = [
         [
             InlineKeyboardButton(
-                text=f"{amount} · {price} ₽",
+                text=f"{amount} ⭐",
                 callback_data=f"stars:amount:{amount}",
             )
         ]
-        for amount, price in STARS_PRICES.items()
+        for amount in STARS_PRICES
     ]
-    rows.append([InlineKeyboardButton(text="Своё количество", callback_data="stars:custom")])
+    rows.append([InlineKeyboardButton(text="✏️ Своё количество", callback_data="stars:custom")])
     rows.append(back_to_menu_keyboard().inline_keyboard[0])
     return InlineKeyboardMarkup(inline_keyboard=rows)

@@ -8,7 +8,7 @@ def premium_keyboard() -> InlineKeyboardMarkup:
     rows = [
         [
             InlineKeyboardButton(
-                text=f"{premium_duration_label(months)} · {price} ₽",
+                text=f"{premium_duration_label(months)} — {price} ₽",
                 callback_data=f"premium:months:{months}",
             )
         ]

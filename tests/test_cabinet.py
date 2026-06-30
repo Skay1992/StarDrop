@@ -3,10 +3,8 @@ from types import SimpleNamespace
 
 from database.orders import Order, PRODUCT_PREMIUM, PRODUCT_STARS, STATUS_COMPLETED
 from database.support import STATUS_ANSWERED, STATUS_OPEN, SupportTicket
-from database.statistics import StatisticsSnapshot
 from database.users import User
 from handlers.cabinet import (
-    show_about,
     show_cabinet,
     show_order_history,
     show_referral,
@@ -101,25 +99,6 @@ class FakeSupportRepository:
         ]
 
 
-class FakeStatisticsRepository:
-    def get_snapshot(self):
-        return StatisticsSnapshot(
-            today_orders=2,
-            today_revenue=1430,
-            today_stars=1000,
-            today_premium_months=1,
-            today_tickets=1,
-            total_orders=12,
-            completed_orders=10,
-            total_users=8,
-            total_stars=5000,
-            total_premium_months=7,
-            total_revenue=9990,
-            today_users=2,
-            week_users=5,
-        )
-
-
 class FakeMessage:
     def __init__(self):
         self.edits = []
@@ -161,7 +140,6 @@ def test_user_can_open_personal_cabinet(monkeypatch):
         "📦 История заказов",
         "💬 Мои обращения",
         "👥 Пригласить друга",
-        "ℹ️ О StarDrop",
         "🏠 Главное меню",
     ]
 
@@ -249,25 +227,4 @@ def test_referral_screen_shows_personal_link_and_share_button(monkeypatch):
     assert edit["reply_markup"].inline_keyboard[0][0].text == "📤 Поделиться"
     assert edit["reply_markup"].inline_keyboard[0][0].url.startswith(
         "https://t.me/share/url?"
-    )
-
-
-def test_about_screen_uses_live_service_totals(monkeypatch):
-    monkeypatch.setattr("handlers.cabinet.StatisticsRepository", FakeStatisticsRepository)
-    callback = FakeCallback(data="cabinet:about")
-
-    asyncio.run(show_about(callback))
-
-    assert callback.message.edits[0]["text"] == (
-        "🚀 StarDrop\n\n"
-        "Версия\n\n"
-        "v1.4\n\n"
-        "Продано звезд:\n"
-        "5000\n\n"
-        "Выполнено заказов:\n"
-        "10\n\n"
-        "Поддержка:\n"
-        "24/7\n\n"
-        "Отзывы:\n"
-        "@stardrop_reviews"
     )

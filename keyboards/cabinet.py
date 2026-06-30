@@ -5,7 +5,6 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from database.support import SupportTicket
 from keyboards.callbacks import (
     CABINET,
-    CABINET_ABOUT,
     CABINET_ORDERS,
     CABINET_REFERRAL,
     CABINET_TICKETS,
@@ -34,7 +33,6 @@ def cabinet_keyboard() -> InlineKeyboardMarkup:
                     callback_data=CABINET_REFERRAL,
                 )
             ],
-            [InlineKeyboardButton(text="ℹ️ О StarDrop", callback_data=CABINET_ABOUT)],
             [InlineKeyboardButton(text="🏠 Главное меню", callback_data=MAIN_MENU)],
         ]
     )

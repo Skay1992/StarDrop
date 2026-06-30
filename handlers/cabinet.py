@@ -6,7 +6,6 @@ from aiogram.types import CallbackQuery
 from config.pricing import premium_duration_label
 from database.orders import OrderRepository, PRODUCT_PREMIUM
 from database.support import SupportTicketRepository
-from database.statistics import StatisticsRepository
 from database.users import User, UserRepository
 from handlers.callbacks import answer_callback, log_callback
 from handlers.formatters import status_label, support_status_label
@@ -19,7 +18,6 @@ from keyboards.cabinet import (
 )
 from keyboards.callbacks import (
     CABINET,
-    CABINET_ABOUT,
     CABINET_ORDERS,
     CABINET_REFERRAL,
     CABINET_TICKETS,
@@ -177,24 +175,4 @@ async def show_referral(callback: CallbackQuery) -> None:
         "Ваша ссылка\n\n"
         f"{link}",
         reply_markup=referral_keyboard(link),
-    )
-
-
-@router.callback_query(F.data == CABINET_ABOUT)
-async def show_about(callback: CallbackQuery) -> None:
-    await answer_callback(callback)
-    stats = StatisticsRepository().get_snapshot()
-    await callback.message.edit_text(
-        "🚀 StarDrop\n\n"
-        "Версия\n\n"
-        "v1.4\n\n"
-        "Продано звезд:\n"
-        f"{stats.total_stars}\n\n"
-        "Выполнено заказов:\n"
-        f"{stats.completed_orders}\n\n"
-        "Поддержка:\n"
-        "24/7\n\n"
-        "Отзывы:\n"
-        "@stardrop_reviews",
-        reply_markup=cabinet_back_keyboard(),
     )

@@ -187,7 +187,7 @@ async def show_about(callback: CallbackQuery) -> None:
     await callback.message.edit_text(
         "🚀 StarDrop\n\n"
         "Версия\n\n"
-        "v1.3\n\n"
+        "v1.4\n\n"
         "Продано звезд:\n"
         f"{stats.total_stars}\n\n"
         "Выполнено заказов:\n"

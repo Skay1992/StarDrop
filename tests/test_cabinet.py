@@ -261,7 +261,7 @@ def test_about_screen_uses_live_service_totals(monkeypatch):
     assert callback.message.edits[0]["text"] == (
         "🚀 StarDrop\n\n"
         "Версия\n\n"
-        "v1.3\n\n"
+        "v1.4\n\n"
         "Продано звезд:\n"
         "5000\n\n"
         "Выполнено заказов:\n"

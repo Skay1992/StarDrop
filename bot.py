@@ -9,7 +9,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from config.settings import load_settings
 from config.logging_config import setup_logging
 from database.db import init_db
-from handlers import admin, cabinet, diagnostics, orders, premium, stars, start, support
+from handlers import admin, cabinet, diagnostics, info, orders, premium, stars, start, support
 from handlers.errors import handle_error
 
 
@@ -29,6 +29,7 @@ async def main() -> None:
     dp.errors.register(handle_error)
 
     dp.include_router(start.router)
+    dp.include_router(info.router)
     dp.include_router(stars.router)
     dp.include_router(premium.router)
     dp.include_router(orders.router)

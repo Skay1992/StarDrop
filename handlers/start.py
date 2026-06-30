@@ -17,14 +17,10 @@ router = Router()
 
 
 MAIN_MENU_TEXT = (
-    "🚀 Добро пожаловать в StarDrop!\n\n"
-    "Здесь можно быстро приобрести:\n\n"
-    "⭐ Telegram Stars\n"
-    "💎 Telegram Premium\n\n"
-    "✔️ Быстро\n"
-    "✔️ Просто\n"
-    "✔️ Поддержка рядом\n\n"
-    "👇 Выберите нужный раздел."
+    "⭐ Добро пожаловать в StarDrop!\n\n"
+    "Быстрая и безопасная покупка\n"
+    "Telegram Stars ⭐ и Telegram Premium 💎\n\n"
+    "👇 Выберите нужный раздел:"
 )
 
 

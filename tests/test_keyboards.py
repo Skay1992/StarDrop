@@ -5,7 +5,15 @@ from keyboards.admin import (
     admin_orders_list_keyboard,
     admin_panel_keyboard,
 )
-from keyboards.callbacks import BUY_PREMIUM, BUY_STARS, CABINET, MAIN_MENU, MY_ORDERS, SUPPORT
+from keyboards.callbacks import (
+    BUY_PREMIUM,
+    BUY_STARS,
+    CABINET,
+    INFO,
+    MAIN_MENU,
+    MY_ORDERS,
+    SUPPORT,
+)
 from keyboards.main import home_menu_keyboard, main_menu_keyboard
 from keyboards.orders import order_cancelled_keyboard, order_completed_keyboard, payment_keyboard
 from keyboards.premium import premium_keyboard
@@ -18,10 +26,11 @@ def test_main_menu_callback_data():
     buttons = [row[0] for row in keyboard.inline_keyboard]
 
     assert [(button.text, button.callback_data, button.url) for button in buttons] == [
-        ("⭐ Купить звезды", BUY_STARS, None),
-        ("💎 Telegram Premium", BUY_PREMIUM, None),
-        ("⭐ Отзывы", None, "https://t.me/stardrop_reviews"),
+        ("🌟 Купить Telegram Stars", BUY_STARS, None),
+        ("💎 Купить Telegram Premium", BUY_PREMIUM, None),
         ("👤 Личный кабинет", CABINET, None),
+        ("ℹ️ Информация", INFO, None),
+        ("❤️ Отзывы клиентов", None, "https://t.me/stardrop_reviews"),
         ("💬 Поддержка", SUPPORT, None),
     ]
 

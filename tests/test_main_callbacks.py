@@ -70,7 +70,19 @@ def test_buy_premium_callback_answers_and_opens_premium_menu():
 
     assert callback.answers
     assert state.cleared
-    assert callback.message.edits[0]["text"] == "💎 Telegram Premium\n\nВыберите срок:"
+    assert callback.message.edits[0]["text"] == (
+        "💎 Telegram Premium\n\n"
+        "Выберите срок подписки:\n\n"
+        "🟢 3 месяца ⭐ Рекомендуем\n"
+        "🎁 Небольшая скидка\n\n"
+        "🟣 6 месяцев\n"
+        "💰 Еще выгоднее\n\n"
+        "🟡 12 месяцев\n"
+        "🏆 Максимальная выгода\n\n"
+        "────────────\n\n"
+        "⚪ 1 месяц\n"
+        "🚧 Скоро появится"
+    )
     assert callback.message.edits[0]["reply_markup"] is not None
 
 

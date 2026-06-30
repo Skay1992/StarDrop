@@ -57,11 +57,17 @@ def test_premium_keyboard_contains_durations_and_back_button():
     rows = keyboard.inline_keyboard
 
     assert [row[0].text for row in rows] == [
-        "1 месяц — 349 ₽",
-        "3 месяца — 990 ₽",
-        "6 месяцев — 1690 ₽",
-        "12 месяцев — 2990 ₽",
+        "🟢 3 месяца ⭐ Рекомендуем",
+        "🟣 6 месяцев",
+        "🟡 12 месяцев",
+        "⚪ 1 месяц 🚧 Скоро",
         "🏠 Главное меню",
+    ]
+    assert [row[0].callback_data for row in rows[:-1]] == [
+        "premium:months:3",
+        "premium:months:6",
+        "premium:months:12",
+        "premium:soon:1",
     ]
     assert rows[-1][0].callback_data == MAIN_MENU
 
